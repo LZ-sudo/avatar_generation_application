@@ -23,13 +23,13 @@ echo.
 REM Setup measurements_extraction_module
 echo [2/4] Setting up measurements_extraction_module...
 cd /d "%SCRIPT_DIR%measurements_extraction_module"
-if not exist ".venv" (
-    python -m venv .venv
+if not exist "venv" (
+    python -m venv venv
     echo Virtual environment created.
 ) else (
     echo Virtual environment already exists.
 )
-call .venv\Scripts\activate.bat
+call venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 if errorlevel 1 (
@@ -44,13 +44,13 @@ echo.
 REM Setup mesh_generation_module
 echo [3/4] Setting up mesh_generation_module...
 cd /d "%SCRIPT_DIR%mesh_generation_module"
-if not exist ".venv" (
-    python -m venv .venv
+if not exist "myenv" (
+    python -m venv myenv
     echo Virtual environment created.
 ) else (
     echo Virtual environment already exists.
 )
-call .venv\Scripts\activate.bat
+call myenv\Scripts\activate.bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 if errorlevel 1 (
