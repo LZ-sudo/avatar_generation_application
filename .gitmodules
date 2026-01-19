@@ -1,0 +1,6 @@
+[submodule "measurements_extraction_module"]
+	path = measurements_extraction_module
+	url = https://github.com/LZ-sudo/measurements_extraction_module.git
+[submodule "mesh_generation_module"]
+	path = mesh_generation_module
+	url = https://github.com/LZ-sudo/mesh_generation_module.git
