@@ -12,6 +12,7 @@ import customtkinter as ctk
 from .app_state import AppState
 from .backend_interface import get_backend
 from .features.camera_calibration import CameraCalibrationView
+from .features.aruco_settings import ArucoSettingsView
 from .features.avatar_generation import AvatarGenerationView
 
 
@@ -21,6 +22,7 @@ class AvatarGeneratorApp(ctk.CTk):
 
     Provides tab-based navigation between features:
     - Camera Calibration
+    - ArUco Settings
     - Avatar Generation
     """
 
@@ -68,6 +70,7 @@ class AvatarGeneratorApp(ctk.CTk):
         self._tabview.pack(expand=True, fill="both", padx=0, pady=0)
 
         self._tabview.add("Camera Calibration")
+        self._tabview.add("ArUco Settings")
         self._tabview.add("Avatar Generation")
 
         self._tabview.set("Avatar Generation")
@@ -79,6 +82,13 @@ class AvatarGeneratorApp(ctk.CTk):
             self.backend,
         )
         self._camera_calibration.pack(expand=True, fill="both")
+
+        aruco_tab = self._tabview.tab("ArUco Settings")
+        self._aruco_settings = ArucoSettingsView(
+            aruco_tab,
+            self.app_state,
+        )
+        self._aruco_settings.pack(expand=True, fill="both")
 
         generation_tab = self._tabview.tab("Avatar Generation")
         self._avatar_generation = AvatarGenerationView(

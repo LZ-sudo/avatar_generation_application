@@ -41,6 +41,90 @@ class HairStyle(Enum):
 
 
 @dataclass
+class MarkerPosition:
+    """Position of a single ArUco marker."""
+    x: float = 0.0
+    y: float = 0.0
+
+
+@dataclass
+class ArucoSettingsState:
+    """State for ArUco marker settings."""
+    marker_size_cm: float = 16.4
+    top_left: MarkerPosition = field(default_factory=lambda: MarkerPosition(0, 203.2))
+    top_right: MarkerPosition = field(default_factory=lambda: MarkerPosition(83, 203.2))
+    bottom_left: MarkerPosition = field(default_factory=lambda: MarkerPosition(0, 8.2))
+    bottom_right: MarkerPosition = field(default_factory=lambda: MarkerPosition(83, 8.2))
+
+    def get_config_path(self) -> Path:
+        """Get the marker_details.json path."""
+        project_root = Path(__file__).parent.parent
+        return project_root / "measurements_extraction_module" / "marker_details.json"
+
+    def load_from_file(self) -> bool:
+        """Load settings from marker_details.json. Returns True if successful."""
+        import json
+        config_path = self.get_config_path()
+        if not config_path.exists():
+            return False
+        try:
+            with open(config_path) as f:
+                data = json.load(f)
+            self.marker_size_cm = data.get("marker_size_cm", self.marker_size_cm)
+            positions = data.get("marker_positions_cm", {})
+            if "top_left" in positions:
+                self.top_left = MarkerPosition(
+                    positions["top_left"].get("x", 0),
+                    positions["top_left"].get("y", 0)
+                )
+            if "top_right" in positions:
+                self.top_right = MarkerPosition(
+                    positions["top_right"].get("x", 0),
+                    positions["top_right"].get("y", 0)
+                )
+            if "bottom_left" in positions:
+                self.bottom_left = MarkerPosition(
+                    positions["bottom_left"].get("x", 0),
+                    positions["bottom_left"].get("y", 0)
+                )
+            if "bottom_right" in positions:
+                self.bottom_right = MarkerPosition(
+                    positions["bottom_right"].get("x", 0),
+                    positions["bottom_right"].get("y", 0)
+                )
+            return True
+        except (json.JSONDecodeError, KeyError):
+            return False
+
+    def save_to_file(self) -> bool:
+        """Save settings to marker_details.json. Returns True if successful."""
+        import json
+        config_path = self.get_config_path()
+        try:
+            data = {
+                "marker_size_cm": self.marker_size_cm,
+                "marker_positions_cm": {
+                    "top_left": {"x": self.top_left.x, "y": self.top_left.y},
+                    "top_right": {"x": self.top_right.x, "y": self.top_right.y},
+                    "bottom_left": {"x": self.bottom_left.x, "y": self.bottom_left.y},
+                    "bottom_right": {"x": self.bottom_right.x, "y": self.bottom_right.y},
+                },
+                "_comment": "Marker details file for ArUco backdrop calibration",
+                "_explanation": {
+                    "marker_size_cm": "Physical size of printed ArUco markers in cm",
+                    "marker_positions_cm": "Physical positions of marker centers in cm from floor",
+                    "horizontal": "x values represent horizontal position in cm (0cm = left edge)",
+                    "vertical": "y values represent vertical position in cm from floor"
+                }
+            }
+            with open(config_path, "w") as f:
+                json.dump(data, f, indent=2)
+            return True
+        except Exception:
+            return False
+
+
+@dataclass
 class CameraCalibrationState:
     """State for Camera Calibration feature."""
     image_directory: Optional[Path] = None
@@ -175,6 +259,9 @@ class AppState:
 
     # Camera calibration state (separate feature)
     camera_calibration: CameraCalibrationState = field(default_factory=CameraCalibrationState)
+
+    # ArUco marker settings state
+    aruco_settings: ArucoSettingsState = field(default_factory=ArucoSettingsState)
 
     # Avatar generation wizard states
     image_input: ImageInputState = field(default_factory=ImageInputState)
