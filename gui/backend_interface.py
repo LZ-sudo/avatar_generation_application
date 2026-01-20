@@ -275,21 +275,59 @@ class RealBackendInterface(BackendInterface):
     ) -> dict:
         """
         Calibrate camera using the measurements_extraction_module.
-        """
-        from measurements_extraction_module.calibrate_camera import (
-            calibrate_camera_from_images
-        )
 
-        # Ensure output directory exists
+        Runs the calibrate_camera.py script using the submodule's venv Python.
+        """
+        import subprocess
+        import json
+
+        project_root = Path(__file__).parent.parent
+        module_path = project_root / "measurements_extraction_module"
+        script_path = module_path / "calibrate_camera.py"
+        venv_python = module_path / "venv" / "Scripts" / "python.exe"
+
+        if not venv_python.exists():
+            raise RuntimeError(
+                f"Virtual environment Python not found at {venv_python}. "
+                "Please set up the measurements_extraction_module venv."
+            )
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        return calibrate_camera_from_images(
-            image_dir=str(image_dir),
-            checkerboard_size=checkerboard_size,
-            square_size_mm=square_size_mm,
-            output_path=str(output_path),
-            visualize=False,
+        cols, rows = checkerboard_size
+        checkerboard_arg = f"{cols}x{rows}"
+
+        cmd = [
+            str(venv_python),
+            str(script_path),
+            "-i", str(image_dir),
+            "-o", str(output_path),
+            "--checkerboard-size", checkerboard_arg,
+            "--square-size", str(square_size_mm),
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(module_path),
         )
+
+        if result.returncode != 0:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            return {
+                "success": False,
+                "error": f"Calibration script failed: {error_msg}",
+            }
+
+        if not output_path.exists():
+            return {
+                "success": False,
+                "error": "Calibration completed but output file not created",
+            }
+
+        with open(output_path) as f:
+            return json.load(f)
 
 
 def get_backend(use_mock: bool = True) -> BackendInterface:

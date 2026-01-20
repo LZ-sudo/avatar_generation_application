@@ -9,6 +9,8 @@ from tkinter import filedialog
 from pathlib import Path
 import threading
 
+from PIL import Image
+
 from ..app_state import AppState
 from ..backend_interface import BackendInterface
 
@@ -198,8 +200,41 @@ class CameraCalibrationView(ctk.CTkFrame):
         separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
         separator.pack(fill="x", pady=(10, 15))
 
+        body_frame = ctk.CTkFrame(content, fg_color="transparent")
+        body_frame.pack(fill="x")
+
+        example_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
+        example_frame.pack(side="left", padx=(0, 20))
+
+        example_image_path = Path(__file__).parent.parent / "images" / "checkerboard_example.png"
+        if example_image_path.exists():
+            pil_image = Image.open(example_image_path)
+            pil_image.thumbnail((180, 180), Image.Resampling.LANCZOS)
+            self._example_ctk_image = ctk.CTkImage(
+                light_image=pil_image,
+                dark_image=pil_image,
+                size=(pil_image.width, pil_image.height),
+            )
+            example_label = ctk.CTkLabel(
+                example_frame,
+                image=self._example_ctk_image,
+                text="",
+            )
+            example_label.pack()
+
+            caption_label = ctk.CTkLabel(
+                example_frame,
+                text="Inner corners guide",
+                font=ctk.CTkFont(size=11),
+                text_color=self.COLORS["text_secondary"],
+            )
+            caption_label.pack(pady=(5, 0))
+
+        fields_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
+        fields_frame.pack(side="left", fill="y")
+
         cols_label = ctk.CTkLabel(
-            content,
+            fields_frame,
             text="Inner Corners (Columns)",
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["text_secondary"],
@@ -209,14 +244,14 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._cols_var = ctk.StringVar(value=str(self.app_state.camera_calibration.checkerboard_cols))
         self._cols_var.trace_add("write", self._on_cols_change)
         self._cols_entry = ctk.CTkEntry(
-            content,
+            fields_frame,
             width=180,
             textvariable=self._cols_var,
         )
         self._cols_entry.pack(anchor="w", pady=(5, 15))
 
         rows_label = ctk.CTkLabel(
-            content,
+            fields_frame,
             text="Inner Corners (Rows)",
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["text_secondary"],
@@ -226,14 +261,14 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._rows_var = ctk.StringVar(value=str(self.app_state.camera_calibration.checkerboard_rows))
         self._rows_var.trace_add("write", self._on_rows_change)
         self._rows_entry = ctk.CTkEntry(
-            content,
+            fields_frame,
             width=180,
             textvariable=self._rows_var,
         )
         self._rows_entry.pack(anchor="w", pady=(5, 15))
 
         size_label = ctk.CTkLabel(
-            content,
+            fields_frame,
             text="Square Size (mm)",
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["text_secondary"],
@@ -243,7 +278,7 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._square_size_var = ctk.StringVar(value=str(self.app_state.camera_calibration.square_size_mm))
         self._square_size_var.trace_add("write", self._on_square_size_change)
         self._square_size_entry = ctk.CTkEntry(
-            content,
+            fields_frame,
             width=180,
             textvariable=self._square_size_var,
         )
@@ -275,13 +310,6 @@ class CameraCalibrationView(ctk.CTkFrame):
             text_color=self.COLORS["section_title"],
         )
         title.pack(side="left")
-
-        self._progress_label = ctk.CTkLabel(
-            header_frame,
-            text="...",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["status_blue"],
-        )
 
         separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
         separator.pack(fill="x", pady=(10, 15))
@@ -407,9 +435,8 @@ class CameraCalibrationView(ctk.CTkFrame):
         self.app_state.camera_calibration.is_calibrating = True
         self.app_state.camera_calibration.reset_results()
 
-        self._calibrate_button.configure(state="disabled")
+        self._calibrate_button.configure(state="disabled", text="Calibrating...")
         self._results_panel.pack(pady=20)
-        self._progress_label.pack(side="left", padx=(10, 0))
         self._results_status_label.configure(
             text="Calibrating...",
             text_color=self.COLORS["status_blue"],
@@ -454,8 +481,7 @@ class CameraCalibrationView(ctk.CTkFrame):
         state = self.app_state.camera_calibration
         state.is_calibrating = False
 
-        self._progress_label.pack_forget()
-        self._calibrate_button.configure(state="normal")
+        self._calibrate_button.configure(state="normal", text="Calibrate Camera")
 
         if state.calibration_success:
             self._results_status_label.configure(

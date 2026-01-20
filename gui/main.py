@@ -34,7 +34,7 @@ class AvatarGeneratorApp(ctk.CTk):
         super().__init__()
 
         self.app_state = AppState()
-        self.backend = get_backend(use_mock=True)
+        self.backend = get_backend(use_mock=False)
 
         self._setup_window()
         self._build_ui()

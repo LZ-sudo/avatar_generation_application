@@ -63,8 +63,9 @@ class CameraCalibrationState:
     existing_reprojection_error: Optional[float] = None
 
     def get_output_path(self) -> Path:
-        """Get the calibration output path."""
-        return Path("measurements_extraction_module/camera_calibration_settings/calibration.json")
+        """Get the calibration output path (absolute path)."""
+        project_root = Path(__file__).parent.parent
+        return project_root / "measurements_extraction_module" / "camera_calibration_settings" / "calibration.json"
 
     def load_existing_calibration(self) -> None:
         """Check if a calibration file exists and load its metadata."""
