@@ -399,7 +399,7 @@ class StepImageInput(ctk.CTkFrame):
         m.lower_leg_length_cm = body.get("lower_leg_length_cm")
         m.shoulder_to_waist_cm = body.get("shoulder_to_waist_cm")
         m.hand_length_cm = body.get("hand_length_cm")
-        m.hair_length_cm = hair.get("hair_length_cm")
+        m.hair_length_cm = hair.get("hair_length_cm") or hair.get("height_length_cm")
 
         # Store visualization path if available
         if result.get("visualization_path"):
