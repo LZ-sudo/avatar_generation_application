@@ -182,26 +182,52 @@ class CameraCalibrationState:
 
 @dataclass
 class ImageInputState:
-    """State for Step 1: Image Input."""
+    """State for Step 1: Image Input and Measurement Extraction."""
     front_image_path: Optional[Path] = None
-    side_image_path: Optional[Path] = None
+    height_cm: Optional[float] = None
+
+    # Status of required configurations
+    camera_calibration_valid: bool = False
+    aruco_settings_valid: bool = False
+
+    # Extraction state
+    is_extracting: bool = False
+    extraction_error: Optional[str] = None
 
     def is_complete(self) -> bool:
-        """Check if both images have been selected."""
-        return self.front_image_path is not None and self.side_image_path is not None
+        """Check if image input is ready for extraction."""
+        return (
+            self.front_image_path is not None
+            and self.height_cm is not None
+            and self.camera_calibration_valid
+            and self.aruco_settings_valid
+        )
+
+    def can_extract(self) -> bool:
+        """Check if all requirements are met for measurement extraction."""
+        return self.is_complete() and not self.is_extracting
 
 
 @dataclass
 class MeasurementsState:
-    """State for Step 2: Measurements."""
+    """State for Step 2: Measurements Review."""
+    # Body measurements from extraction script
     height_cm: Optional[float] = None
+    head_width_cm: Optional[float] = None
     shoulder_width_cm: Optional[float] = None
-    chest_circumference_cm: Optional[float] = None
-    waist_circumference_cm: Optional[float] = None
-    hip_circumference_cm: Optional[float] = None
-    arm_length_cm: Optional[float] = None
-    leg_length_cm: Optional[float] = None
-    head_circumference_cm: Optional[float] = None
+    hip_width_cm: Optional[float] = None
+    upper_arm_length_cm: Optional[float] = None
+    forearm_length_cm: Optional[float] = None
+    upper_leg_length_cm: Optional[float] = None
+    lower_leg_length_cm: Optional[float] = None
+    shoulder_to_waist_cm: Optional[float] = None
+    hand_length_cm: Optional[float] = None
+
+    # Hair measurements from extraction script
+    hair_length_cm: Optional[float] = None
+
+    # Visualization image path
+    visualization_path: Optional[Path] = None
 
     is_extracted: bool = False
     is_manually_edited: bool = False
@@ -214,14 +240,26 @@ class MeasurementsState:
         """Convert measurements to dictionary format."""
         return {
             "height_cm": self.height_cm,
+            "head_width_cm": self.head_width_cm,
             "shoulder_width_cm": self.shoulder_width_cm,
-            "chest_circumference_cm": self.chest_circumference_cm,
-            "waist_circumference_cm": self.waist_circumference_cm,
-            "hip_circumference_cm": self.hip_circumference_cm,
-            "arm_length_cm": self.arm_length_cm,
-            "leg_length_cm": self.leg_length_cm,
-            "head_circumference_cm": self.head_circumference_cm,
+            "hip_width_cm": self.hip_width_cm,
+            "upper_arm_length_cm": self.upper_arm_length_cm,
+            "forearm_length_cm": self.forearm_length_cm,
+            "upper_leg_length_cm": self.upper_leg_length_cm,
+            "lower_leg_length_cm": self.lower_leg_length_cm,
+            "shoulder_to_waist_cm": self.shoulder_to_waist_cm,
+            "hand_length_cm": self.hand_length_cm,
+            "hair_length_cm": self.hair_length_cm,
         }
+
+    def get_intermediates_dir(self) -> Path:
+        """Get the intermediates directory path."""
+        project_root = Path(__file__).parent.parent
+        return project_root / "intermediates"
+
+    def ensure_intermediates_dir_exists(self) -> None:
+        """Create the intermediates directory if it doesn't exist."""
+        self.get_intermediates_dir().mkdir(parents=True, exist_ok=True)
 
 
 @dataclass

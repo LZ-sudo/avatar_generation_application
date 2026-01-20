@@ -2,16 +2,13 @@
 Backend interface for the Avatar Generator application.
 
 This module defines the interface between the GUI and the backend modules.
-It provides mock implementations for testing the GUI independently.
-
-When the backend modules are ready, replace MockBackendInterface with
-a real implementation that calls the actual modules.
 """
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Optional
-import time
+from typing import Callable
+import subprocess
+import json
 
 
 class BackendInterface(ABC):
@@ -25,17 +22,21 @@ class BackendInterface(ABC):
     def extract_measurements(
         self,
         front_image: Path,
-        side_image: Path,
+        height_cm: float,
+        camera_calibration_path: Path,
+        marker_details_path: Path,
     ) -> dict:
         """
-        Extract body measurements from front and side images.
+        Extract body measurements from front image using calibration data.
 
         Args:
             front_image: Path to front view image
-            side_image: Path to side view image
+            height_cm: Subject's known height in centimeters
+            camera_calibration_path: Path to camera calibration JSON
+            marker_details_path: Path to ArUco marker details JSON
 
         Returns:
-            Dictionary containing extracted measurements
+            Dictionary containing body_measurements, hair_measurements, and visualization_path
         """
         pass
 
@@ -92,126 +93,11 @@ class BackendInterface(ABC):
         pass
 
 
-class MockBackendInterface(BackendInterface):
-    """
-    Mock implementation of the backend interface for GUI testing.
-
-    Returns realistic dummy data to test the GUI flow.
-    """
-
-    def extract_measurements(
-        self,
-        front_image: Path,
-        side_image: Path,
-    ) -> dict:
-        """
-        Return mock measurements for testing.
-
-        Simulates the extraction process with a small delay.
-        """
-        time.sleep(1.0)
-
-        return {
-            "height_cm": 175.5,
-            "shoulder_width_cm": 45.2,
-            "chest_circumference_cm": 98.0,
-            "waist_circumference_cm": 82.5,
-            "hip_circumference_cm": 96.0,
-            "arm_length_cm": 58.0,
-            "leg_length_cm": 82.0,
-            "head_circumference_cm": 56.5,
-        }
-
-    def generate_avatar(
-        self,
-        measurements: dict,
-        config: dict,
-        progress_callback: Callable[[float, str], None] = None,
-    ) -> dict:
-        """
-        Simulate avatar generation with progress updates.
-        """
-        steps = [
-            (0.1, "Initializing Blender..."),
-            (0.2, "Loading base mesh..."),
-            (0.3, "Applying body proportions..."),
-            (0.5, "Adjusting measurements..."),
-            (0.6, "Generating rig..."),
-            (0.7, "Applying hair style..."),
-            (0.8, "Finalizing mesh..."),
-            (0.9, "Rendering preview..."),
-            (1.0, "Exporting files..."),
-        ]
-
-        for progress, status in steps:
-            if progress_callback:
-                progress_callback(progress, status)
-            time.sleep(0.5)
-
-        output_dir = Path(config.get("output_directory", "."))
-        filename = config.get("output_filename", "avatar")
-
-        result = {
-            "fbx_path": output_dir / f"{filename}.fbx",
-            "preview_images": [],
-        }
-
-        if config.get("export_obj"):
-            result["obj_path"] = output_dir / f"{filename}.obj"
-
-        return result
-
-    def open_in_blender(self, file_path: Path) -> None:
-        """
-        Mock opening in Blender (just prints for testing).
-        """
-        print(f"[Mock] Would open in Blender: {file_path}")
-
-    def calibrate_camera(
-        self,
-        image_dir: Path,
-        checkerboard_size: tuple[int, int],
-        square_size_mm: float,
-        output_path: Path,
-    ) -> dict:
-        """
-        Mock camera calibration for testing.
-        """
-        time.sleep(2.0)
-
-        # Create output directory if needed
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Mock calibration results
-        import json
-        results = {
-            "success": True,
-            "camera_matrix": [
-                [1000.0, 0.0, 640.0],
-                [0.0, 1000.0, 480.0],
-                [0.0, 0.0, 1.0],
-            ],
-            "distortion_coefficients": [[0.1, -0.2, 0.001, 0.001, 0.05]],
-            "reprojection_error": 0.35,
-            "num_successful_images": 10,
-            "num_failed_images": 2,
-            "successful_images": [],
-            "failed_images": [],
-        }
-
-        with open(output_path, "w") as f:
-            json.dump(results, f, indent=2)
-
-        return results
-
-
 class RealBackendInterface(BackendInterface):
     """
     Real implementation of the backend interface.
 
     Connects to the actual measurement extraction and mesh generation modules.
-
-    TODO: Implement when backend modules are ready.
     """
 
     def __init__(
@@ -227,17 +113,72 @@ class RealBackendInterface(BackendInterface):
     def extract_measurements(
         self,
         front_image: Path,
-        side_image: Path,
+        height_cm: float,
+        camera_calibration_path: Path,
+        marker_details_path: Path,
     ) -> dict:
         """
         Extract measurements using the measurements_extraction_module.
 
-        TODO: Implement actual module integration.
+        Runs the complete_measurements.py script using the submodule's venv Python.
         """
-        raise NotImplementedError(
-            "Real backend not yet implemented. "
-            "Use MockBackendInterface for testing."
+        project_root = Path(__file__).parent.parent
+        module_path = project_root / "measurements_extraction_module"
+        script_path = module_path / "complete_measurements.py"
+        venv_python = module_path / "venv" / "Scripts" / "python.exe"
+
+        if not venv_python.exists():
+            raise RuntimeError(
+                f"Virtual environment Python not found at {venv_python}. "
+                "Please set up the measurements_extraction_module venv."
+            )
+
+        # Create intermediates directory for outputs
+        intermediates_dir = project_root / "intermediates"
+        intermediates_dir.mkdir(parents=True, exist_ok=True)
+
+        # Output paths
+        output_measurements = intermediates_dir / "measurements.json"
+        visualization_dir = intermediates_dir
+
+        cmd = [
+            str(venv_python),
+            str(script_path),
+            str(front_image),
+            "--marker-details", str(marker_details_path),
+            "--camera-calibration", str(camera_calibration_path),
+            "--height", str(height_cm),
+            "-o", str(output_measurements),
+            "--save-visualization", str(visualization_dir),
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(module_path),
         )
+
+        if result.returncode != 0:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            raise RuntimeError(f"Measurement extraction failed: {error_msg}")
+
+        if not output_measurements.exists():
+            raise RuntimeError("Extraction completed but output file not created")
+
+        with open(output_measurements) as f:
+            measurements = json.load(f)
+
+        # Check for visualization image
+        visualization_path = visualization_dir / "aruco_backdrop_detection.jpg"
+        if not visualization_path.exists():
+            visualization_path = None
+
+        return {
+            "body_measurements": measurements.get("body_measurements", {}),
+            "hair_measurements": measurements.get("hair_measurements", {}),
+            "visualization_path": str(visualization_path) if visualization_path else None,
+        }
 
     def generate_avatar(
         self,
@@ -248,12 +189,9 @@ class RealBackendInterface(BackendInterface):
         """
         Generate avatar using the mesh_generation_module.
 
-        TODO: Implement actual module integration.
+        TODO: Implement when mesh generation module is ready.
         """
-        raise NotImplementedError(
-            "Real backend not yet implemented. "
-            "Use MockBackendInterface for testing."
-        )
+        raise NotImplementedError("Avatar generation not yet implemented.")
 
     def open_in_blender(self, file_path: Path) -> None:
         """
@@ -261,10 +199,7 @@ class RealBackendInterface(BackendInterface):
 
         TODO: Implement using run_blender.py functionality.
         """
-        raise NotImplementedError(
-            "Real backend not yet implemented. "
-            "Use MockBackendInterface for testing."
-        )
+        raise NotImplementedError("Blender integration not yet implemented.")
 
     def calibrate_camera(
         self,
@@ -278,9 +213,6 @@ class RealBackendInterface(BackendInterface):
 
         Runs the calibrate_camera.py script using the submodule's venv Python.
         """
-        import subprocess
-        import json
-
         project_root = Path(__file__).parent.parent
         module_path = project_root / "measurements_extraction_module"
         script_path = module_path / "calibrate_camera.py"
@@ -330,18 +262,11 @@ class RealBackendInterface(BackendInterface):
             return json.load(f)
 
 
-def get_backend(use_mock: bool = True) -> BackendInterface:
+def get_backend() -> BackendInterface:
     """
-    Factory function to get the appropriate backend interface.
-
-    Args:
-        use_mock: If True, returns mock backend for testing.
-                  If False, returns real backend (requires modules).
+    Factory function to get the backend interface.
 
     Returns:
         BackendInterface implementation
     """
-    if use_mock:
-        return MockBackendInterface()
-    else:
-        return RealBackendInterface()
+    return RealBackendInterface()

@@ -42,8 +42,13 @@ class AvatarGenerationView(ctk.CTkFrame):
         self._step_container = ctk.CTkFrame(self, fg_color="transparent")
 
         self.steps = {
-            WizardStep.IMAGE_INPUT: StepImageInput(self._step_container, self.app_state),
-            WizardStep.MEASUREMENTS: StepMeasurements(self._step_container, self.app_state, self.backend),
+            WizardStep.IMAGE_INPUT: StepImageInput(
+                self._step_container,
+                self.app_state,
+                self.backend,
+                on_navigate_next=self._go_next,
+            ),
+            WizardStep.MEASUREMENTS: StepMeasurements(self._step_container, self.app_state),
             WizardStep.CONFIGURE: StepConfigure(self._step_container, self.app_state),
             WizardStep.GENERATE: StepGenerate(self._step_container, self.app_state, self.backend),
         }
@@ -120,7 +125,9 @@ class AvatarGenerationView(ctk.CTkFrame):
         self._current_step_widget = self.steps[step]
         self._current_step_widget.pack(expand=True, fill="both")
 
-        if step == WizardStep.MEASUREMENTS:
+        if step == WizardStep.IMAGE_INPUT:
+            self.steps[step].on_enter()
+        elif step == WizardStep.MEASUREMENTS:
             self.steps[step].on_enter()
         elif step == WizardStep.GENERATE:
             self.steps[step].on_enter()

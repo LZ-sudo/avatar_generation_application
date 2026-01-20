@@ -1,15 +1,15 @@
 """
 Step 2: Measurements Review
 
-Displays extracted measurements and allows manual corrections.
+Displays extracted measurements with visualization and allows manual corrections.
 """
 
 import customtkinter as ctk
 from typing import Callable, Optional
-import threading
+from pathlib import Path
+from PIL import Image
 
 from ..app_state import AppState
-from ..backend_interface import BackendInterface
 
 
 class MeasurementField(ctk.CTkFrame):
@@ -35,9 +35,9 @@ class MeasurementField(ctk.CTkFrame):
         self._label = ctk.CTkLabel(
             self,
             text=label,
-            font=ctk.CTkFont(size=14),
+            font=ctk.CTkFont(size=13),
             text_color=self.COLORS["label"],
-            width=180,
+            width=160,
             anchor="w",
         )
         self._label.pack(side="left")
@@ -50,7 +50,7 @@ class MeasurementField(ctk.CTkFrame):
 
         self._entry = ctk.CTkEntry(
             entry_frame,
-            width=80,
+            width=70,
             textvariable=self._entry_var,
             justify="right",
         )
@@ -61,7 +61,7 @@ class MeasurementField(ctk.CTkFrame):
             text=unit,
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["label"],
-            width=30,
+            width=25,
         )
         unit_label.pack(side="left", padx=(5, 0))
 
@@ -76,7 +76,10 @@ class MeasurementField(ctk.CTkFrame):
 
     def set_value(self, value: Optional[float]) -> None:
         """Set the field value."""
-        self._entry_var.set(str(value) if value is not None else "")
+        if value is not None:
+            self._entry_var.set(f"{value:.1f}")
+        else:
+            self._entry_var.set("")
 
     @property
     def value(self) -> Optional[float]:
@@ -91,24 +94,24 @@ class StepMeasurements(ctk.CTkFrame):
     """
     Measurements review step for the avatar generation wizard.
 
-    Displays extracted measurements and allows manual editing.
+    Displays extracted measurements with visualization and allows manual editing.
     """
 
     COLORS = {
         "title": "#1f2937",
         "subtitle": "#6b7280",
-        "status_blue": "#2563eb",
-        "status_green": "#16a34a",
         "panel_bg": "#ffffff",
         "panel_border": "#d1d5db",
         "info_icon": "#2563eb",
         "info_text": "#6b7280",
+        "section_title": "#374151",
     }
 
-    def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
+    VISUALIZATION_SIZE = (350, 450)
+
+    def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
-        self.backend = backend
         self._fields: dict[str, MeasurementField] = {}
         self._build()
 
@@ -117,6 +120,7 @@ class StepMeasurements(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=30)
 
+        # Header
         header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         header_frame.pack(pady=(0, 20))
 
@@ -136,69 +140,92 @@ class StepMeasurements(ctk.CTkFrame):
         )
         subtitle_label.pack(pady=(8, 0))
 
-        self._status_label = ctk.CTkLabel(
-            content_frame,
-            text="",
+        # Main content (two columns)
+        main_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        main_frame.pack(pady=10)
+
+        # Left column - Visualization
+        vis_panel = ctk.CTkFrame(
+            main_frame,
+            fg_color=self.COLORS["panel_bg"],
+            border_width=1,
+            border_color=self.COLORS["panel_border"],
+            corner_radius=10,
+            width=self.VISUALIZATION_SIZE[0] + 20,
+            height=self.VISUALIZATION_SIZE[1] + 60,
+        )
+        vis_panel.pack(side="left", padx=(0, 20))
+        vis_panel.pack_propagate(False)
+
+        vis_title = ctk.CTkLabel(
+            vis_panel,
+            text="Detection Visualization",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=self.COLORS["section_title"],
+        )
+        vis_title.pack(pady=(15, 10))
+
+        self._vis_label = ctk.CTkLabel(
+            vis_panel,
+            text="No visualization available",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["status_blue"],
+            text_color=self.COLORS["subtitle"],
+            width=self.VISUALIZATION_SIZE[0],
+            height=self.VISUALIZATION_SIZE[1],
         )
-        self._status_label.pack(pady=(0, 10))
+        self._vis_label.pack(padx=10, pady=(0, 10))
 
-        self._extract_button = ctk.CTkButton(
-            content_frame,
-            text="Extract Measurements",
-            command=self._extract_measurements,
-        )
-        self._extract_button.pack(pady=(0, 20))
+        # Right column - Measurements
+        right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
+        right_column.pack(side="left", fill="y")
 
-        measurements_data = [
-            ("height_cm", "Height", "cm"),
-            ("shoulder_width_cm", "Shoulder Width", "cm"),
-            ("chest_circumference_cm", "Chest Circumference", "cm"),
-            ("waist_circumference_cm", "Waist Circumference", "cm"),
-            ("hip_circumference_cm", "Hip Circumference", "cm"),
-            ("arm_length_cm", "Arm Length", "cm"),
-            ("leg_length_cm", "Leg Length", "cm"),
-            ("head_circumference_cm", "Head Circumference", "cm"),
-        ]
-
-        for field_name, label, unit in measurements_data:
-            field = MeasurementField(
-                content_frame,
-                label=label,
-                unit=unit,
-                on_change=lambda v, fn=field_name: self._on_field_change(fn, v),
-            )
-            self._fields[field_name] = field
-
-        fields_panel = ctk.CTkFrame(
-            content_frame,
+        # Extracted measurements panel
+        measurements_panel = ctk.CTkFrame(
+            right_column,
             fg_color=self.COLORS["panel_bg"],
             border_width=1,
             border_color=self.COLORS["panel_border"],
             corner_radius=10,
         )
-        fields_panel.pack(pady=10)
+        measurements_panel.pack(fill="x")
 
-        left_column = ctk.CTkFrame(fields_panel, fg_color="transparent")
-        left_column.pack(side="left", padx=20, pady=20)
+        measurements_content = ctk.CTkFrame(measurements_panel, fg_color="transparent")
+        measurements_content.pack(padx=20, pady=15)
 
-        self._fields["height_cm"].pack(in_=left_column, pady=8)
-        self._fields["shoulder_width_cm"].pack(in_=left_column, pady=8)
-        self._fields["chest_circumference_cm"].pack(in_=left_column, pady=8)
-        self._fields["waist_circumference_cm"].pack(in_=left_column, pady=8)
+        measurements_title = ctk.CTkLabel(
+            measurements_content,
+            text="Extracted Measurements",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=self.COLORS["section_title"],
+        )
+        measurements_title.pack(anchor="w", pady=(0, 10))
 
-        separator = ctk.CTkFrame(fields_panel, width=1, fg_color=self.COLORS["panel_border"])
-        separator.pack(side="left", fill="y", pady=20)
+        # All measurement fields
+        all_measurements = [
+            ("height_cm", "Height"),
+            ("head_width_cm", "Head Width"),
+            ("shoulder_width_cm", "Shoulder Width"),
+            ("hip_width_cm", "Hip Width"),
+            ("shoulder_to_waist_cm", "Shoulder to Waist"),
+            ("upper_arm_length_cm", "Upper Arm Length"),
+            ("forearm_length_cm", "Forearm Length"),
+            ("upper_leg_length_cm", "Upper Leg Length"),
+            ("lower_leg_length_cm", "Lower Leg Length"),
+            ("hand_length_cm", "Hand Length"),
+            ("hair_length_cm", "Hair Length"),
+        ]
 
-        right_column = ctk.CTkFrame(fields_panel, fg_color="transparent")
-        right_column.pack(side="left", padx=20, pady=20)
+        for field_name, label in all_measurements:
+            field = MeasurementField(
+                measurements_content,
+                label=label,
+                unit="cm",
+                on_change=lambda v, fn=field_name: self._on_field_change(fn, v),
+            )
+            field.pack(anchor="w", pady=3)
+            self._fields[field_name] = field
 
-        self._fields["hip_circumference_cm"].pack(in_=right_column, pady=8)
-        self._fields["arm_length_cm"].pack(in_=right_column, pady=8)
-        self._fields["leg_length_cm"].pack(in_=right_column, pady=8)
-        self._fields["head_circumference_cm"].pack(in_=right_column, pady=8)
-
+        # Info frame
         info_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         info_frame.pack(pady=(20, 0))
 
@@ -213,7 +240,7 @@ class StepMeasurements(ctk.CTkFrame):
 
         info_text = ctk.CTkLabel(
             info_frame,
-            text="Measurements are automatically extracted from images. You can manually adjust values if needed.",
+            text="Measurements were automatically extracted. You can manually adjust values if needed.",
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["info_text"],
         )
@@ -221,63 +248,54 @@ class StepMeasurements(ctk.CTkFrame):
 
     def on_enter(self) -> None:
         """Called when entering this step."""
-        if not self.app_state.measurements.is_extracted:
-            self._extract_measurements()
-        else:
-            self._populate_fields()
-
-    def _extract_measurements(self) -> None:
-        """Extract measurements from images."""
-        self._status_label.configure(
-            text="Extracting measurements...",
-            text_color=self.COLORS["status_blue"],
-        )
-        self._extract_button.configure(state="disabled")
-
-        thread = threading.Thread(target=self._run_extraction)
-        thread.start()
-
-    def _run_extraction(self) -> None:
-        """Run extraction in background thread."""
-        measurements = self.backend.extract_measurements(
-            front_image=self.app_state.image_input.front_image_path,
-            side_image=self.app_state.image_input.side_image_path,
-        )
-
-        self.after(0, lambda: self._on_extraction_complete(measurements))
-
-    def _on_extraction_complete(self, measurements: dict) -> None:
-        """Handle extraction completion on main thread."""
-        self.app_state.measurements.height_cm = measurements.get("height_cm")
-        self.app_state.measurements.shoulder_width_cm = measurements.get("shoulder_width_cm")
-        self.app_state.measurements.chest_circumference_cm = measurements.get("chest_circumference_cm")
-        self.app_state.measurements.waist_circumference_cm = measurements.get("waist_circumference_cm")
-        self.app_state.measurements.hip_circumference_cm = measurements.get("hip_circumference_cm")
-        self.app_state.measurements.arm_length_cm = measurements.get("arm_length_cm")
-        self.app_state.measurements.leg_length_cm = measurements.get("leg_length_cm")
-        self.app_state.measurements.head_circumference_cm = measurements.get("head_circumference_cm")
-        self.app_state.measurements.is_extracted = True
-
         self._populate_fields()
+        self._load_visualization()
 
-        self._status_label.configure(
-            text="Measurements extracted successfully",
-            text_color=self.COLORS["status_green"],
-        )
-        self._extract_button.configure(state="normal")
-        self.app_state.notify_change()
+    def _load_visualization(self) -> None:
+        """Load and display the visualization image."""
+        vis_path = self.app_state.measurements.visualization_path
+
+        if vis_path and vis_path.exists():
+            try:
+                pil_image = Image.open(vis_path)
+
+                # Scale to fit while maintaining aspect ratio
+                max_w, max_h = self.VISUALIZATION_SIZE
+                pil_image.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+
+                ctk_image = ctk.CTkImage(
+                    light_image=pil_image,
+                    dark_image=pil_image,
+                    size=(pil_image.width, pil_image.height),
+                )
+
+                self._vis_label.configure(image=ctk_image, text="")
+                self._vis_label._image = ctk_image
+            except Exception:
+                self._vis_label.configure(
+                    image=None,
+                    text="Could not load visualization"
+                )
+        else:
+            self._vis_label.configure(
+                image=None,
+                text="No visualization available"
+            )
 
     def _populate_fields(self) -> None:
         """Populate fields from app state."""
         m = self.app_state.measurements
         self._fields["height_cm"].set_value(m.height_cm)
+        self._fields["head_width_cm"].set_value(m.head_width_cm)
         self._fields["shoulder_width_cm"].set_value(m.shoulder_width_cm)
-        self._fields["chest_circumference_cm"].set_value(m.chest_circumference_cm)
-        self._fields["waist_circumference_cm"].set_value(m.waist_circumference_cm)
-        self._fields["hip_circumference_cm"].set_value(m.hip_circumference_cm)
-        self._fields["arm_length_cm"].set_value(m.arm_length_cm)
-        self._fields["leg_length_cm"].set_value(m.leg_length_cm)
-        self._fields["head_circumference_cm"].set_value(m.head_circumference_cm)
+        self._fields["hip_width_cm"].set_value(m.hip_width_cm)
+        self._fields["shoulder_to_waist_cm"].set_value(m.shoulder_to_waist_cm)
+        self._fields["upper_arm_length_cm"].set_value(m.upper_arm_length_cm)
+        self._fields["forearm_length_cm"].set_value(m.forearm_length_cm)
+        self._fields["upper_leg_length_cm"].set_value(m.upper_leg_length_cm)
+        self._fields["lower_leg_length_cm"].set_value(m.lower_leg_length_cm)
+        self._fields["hand_length_cm"].set_value(m.hand_length_cm)
+        self._fields["hair_length_cm"].set_value(m.hair_length_cm)
 
     def _on_field_change(self, field_name: str, value: Optional[float]) -> None:
         """Handle field value change."""

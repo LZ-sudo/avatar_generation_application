@@ -36,8 +36,6 @@ class WizardNav(ctk.CTkFrame):
         "upcoming_fg": "#4b5563",
         "current_label": "#2563eb",
         "other_label": "#6b7280",
-        "connector_completed": "#16a34a",
-        "connector_upcoming": "#d1d5db",
     }
 
     def __init__(
@@ -83,13 +81,8 @@ class WizardNav(ctk.CTkFrame):
                 is_completed=is_completed,
                 is_clickable=is_clickable,
             )
-            indicator.pack(side="left", padx=0)
+            indicator.pack(side="left", padx=15)
             self._indicator_widgets.append(indicator)
-
-            if i < len(steps) - 1:
-                connector = self._create_connector(container, is_completed)
-                connector.pack(side="left", padx=0, pady=(0, 20))
-                self._indicator_widgets.append(connector)
 
     def _create_step_indicator(
         self,
@@ -146,18 +139,6 @@ class WizardNav(ctk.CTkFrame):
             label.configure(cursor="hand2")
 
         return frame
-
-    def _create_connector(self, parent: ctk.CTkFrame, is_completed: bool) -> ctk.CTkFrame:
-        """Create a connector line between step indicators."""
-        color = self.COLORS["connector_completed"] if is_completed else self.COLORS["connector_upcoming"]
-
-        connector = ctk.CTkFrame(
-            parent,
-            width=60,
-            height=2,
-            fg_color=color,
-        )
-        return connector
 
     def _handle_step_click(self, step: WizardStep) -> None:
         """Handle click on a step indicator."""
