@@ -4,245 +4,323 @@ Step 3: Avatar Configuration
 Allows the user to configure avatar generation options.
 """
 
-import flet as ft
+import customtkinter as ctk
+from tkinter import filedialog
 from pathlib import Path
 
 from ..app_state import AppState, RigType, HairStyle
 
 
-class StepConfigure(ft.Container):
+class StepConfigure(ctk.CTkFrame):
     """
     Configuration step for the avatar generation wizard.
 
     Provides options for rig type, hair style, and output settings.
     """
 
-    def __init__(self, app_state: AppState):
-        super().__init__()
+    COLORS = {
+        "title": "#1f2937",
+        "subtitle": "#6b7280",
+        "section_title": "#374151",
+        "panel_bg": "#ffffff",
+        "panel_border": "#d1d5db",
+        "warning": "#c2410c",
+    }
+
+    RIG_OPTIONS = {
+        "Default": RigType.DEFAULT.value,
+        "Default (No Toes)": RigType.DEFAULT_NO_TOES.value,
+        "Game Engine": RigType.GAME_ENGINE.value,
+    }
+
+    HAIR_OPTIONS = {
+        "None": HairStyle.NONE.value,
+        "Short": HairStyle.SHORT.value,
+        "Medium": HairStyle.MEDIUM.value,
+        "Long": HairStyle.LONG.value,
+    }
+
+    def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
+        super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
-        self._folder_picker = None
         self._build()
 
     def _build(self) -> None:
         """Build the step content."""
-        header = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Configure Avatar",
-                        size=24,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.GREY_800,
-                    ),
-                    ft.Text(
-                        "Set avatar options and output preferences.",
-                        size=14,
-                        color=ft.Colors.GREY_600,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
-            ),
-            padding=ft.Padding.only(bottom=20),
+        content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        content_frame.pack(expand=True, fill="both", padx=30, pady=30)
+
+        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        header_frame.pack(pady=(0, 20))
+
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="Configure Avatar",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=self.COLORS["title"],
+        )
+        title_label.pack()
+
+        subtitle_label = ctk.CTkLabel(
+            header_frame,
+            text="Set avatar options and output preferences.",
+            font=ctk.CTkFont(size=14),
+            text_color=self.COLORS["subtitle"],
+        )
+        subtitle_label.pack(pady=(8, 0))
+
+        panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        panels_frame.pack(pady=20)
+
+        avatar_options = self._create_avatar_options(panels_frame)
+        avatar_options.pack(side="left", padx=15, anchor="n")
+
+        output_options = self._create_output_options(panels_frame)
+        output_options.pack(side="left", padx=15, anchor="n")
+
+        self._validation_label = ctk.CTkLabel(
+            content_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["warning"],
+        )
+        self._validation_label.pack(pady=(10, 0))
+
+    def _create_avatar_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
+        """Create the avatar options panel."""
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=self.COLORS["panel_bg"],
+            border_width=1,
+            border_color=self.COLORS["panel_border"],
+            corner_radius=10,
         )
 
-        self._rig_dropdown = ft.Dropdown(
-            label="Rig Type",
+        content = ctk.CTkFrame(panel, fg_color="transparent")
+        content.pack(padx=20, pady=20)
+
+        title = ctk.CTkLabel(
+            content,
+            text="Avatar Options",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=self.COLORS["section_title"],
+        )
+        title.pack(anchor="w")
+
+        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator.pack(fill="x", pady=(10, 15))
+
+        rig_label = ctk.CTkLabel(
+            content,
+            text="Rig Type",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
+        )
+        rig_label.pack(anchor="w")
+
+        rig_values = list(self.RIG_OPTIONS.keys())
+        current_rig = next(
+            (k for k, v in self.RIG_OPTIONS.items() if v == self.app_state.configure.rig_type.value),
+            rig_values[0]
+        )
+
+        self._rig_var = ctk.StringVar(value=current_rig)
+        self._rig_dropdown = ctk.CTkOptionMenu(
+            content,
+            width=250,
+            values=rig_values,
+            variable=self._rig_var,
+            command=self._on_rig_change,
+        )
+        self._rig_dropdown.pack(anchor="w", pady=(5, 15))
+
+        hair_label = ctk.CTkLabel(
+            content,
+            text="Hair Style",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
+        )
+        hair_label.pack(anchor="w")
+
+        hair_values = list(self.HAIR_OPTIONS.keys())
+        current_hair = next(
+            (k for k, v in self.HAIR_OPTIONS.items() if v == self.app_state.configure.hair_style.value),
+            hair_values[0]
+        )
+
+        self._hair_var = ctk.StringVar(value=current_hair)
+        self._hair_dropdown = ctk.CTkOptionMenu(
+            content,
+            width=250,
+            values=hair_values,
+            variable=self._hair_var,
+            command=self._on_hair_change,
+        )
+        self._hair_dropdown.pack(anchor="w", pady=(5, 0))
+
+        return panel
+
+    def _create_output_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
+        """Create the output options panel."""
+        panel = ctk.CTkFrame(
+            parent,
+            fg_color=self.COLORS["panel_bg"],
+            border_width=1,
+            border_color=self.COLORS["panel_border"],
+            corner_radius=10,
+        )
+
+        content = ctk.CTkFrame(panel, fg_color="transparent")
+        content.pack(padx=20, pady=20)
+
+        title = ctk.CTkLabel(
+            content,
+            text="Output Settings",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=self.COLORS["section_title"],
+        )
+        title.pack(anchor="w")
+
+        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator.pack(fill="x", pady=(10, 15))
+
+        dir_label = ctk.CTkLabel(
+            content,
+            text="Output Directory",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
+        )
+        dir_label.pack(anchor="w")
+
+        dir_frame = ctk.CTkFrame(content, fg_color="transparent")
+        dir_frame.pack(anchor="w", pady=(5, 15), fill="x")
+
+        self._dir_var = ctk.StringVar(
+            value=str(self.app_state.configure.output_directory) if self.app_state.configure.output_directory else ""
+        )
+        self._dir_entry = ctk.CTkEntry(
+            dir_frame,
             width=300,
-            options=[
-                ft.DropdownOption(key=RigType.DEFAULT.value, text="Default"),
-                ft.DropdownOption(key=RigType.DEFAULT_NO_TOES.value, text="Default (No Toes)"),
-                ft.DropdownOption(key=RigType.GAME_ENGINE.value, text="Game Engine"),
-            ],
-            value=self.app_state.configure.rig_type.value,
-            on_select=self._on_rig_change,
+            textvariable=self._dir_var,
+            state="disabled",
+            placeholder_text="Click 'Browse' to select output folder",
         )
+        self._dir_entry.pack(side="left")
 
-        self._hair_dropdown = ft.Dropdown(
-            label="Hair Style",
-            width=300,
-            options=[
-                ft.DropdownOption(key=HairStyle.NONE.value, text="None"),
-                ft.DropdownOption(key=HairStyle.SHORT.value, text="Short"),
-                ft.DropdownOption(key=HairStyle.MEDIUM.value, text="Medium"),
-                ft.DropdownOption(key=HairStyle.LONG.value, text="Long"),
-            ],
-            value=self.app_state.configure.hair_style.value,
-            on_select=self._on_hair_change,
+        browse_button = ctk.CTkButton(
+            dir_frame,
+            text="Browse",
+            width=80,
+            command=self._open_folder_picker,
         )
+        browse_button.pack(side="left", padx=(10, 0))
 
-        self._output_path_field = ft.TextField(
-            label="Output Directory",
-            width=400,
-            read_only=True,
-            value=str(self.app_state.configure.output_directory) if self.app_state.configure.output_directory else "",
-            hint_text="Click 'Browse' to select output folder",
+        filename_label = ctk.CTkLabel(
+            content,
+            text="Output Filename",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
         )
+        filename_label.pack(anchor="w")
 
-        self._browse_button = ft.Button(
-            "Browse",
-            icon=ft.Icons.FOLDER_OPEN,
-            on_click=self._open_folder_picker,
+        filename_frame = ctk.CTkFrame(content, fg_color="transparent")
+        filename_frame.pack(anchor="w", pady=(5, 15))
+
+        self._filename_var = ctk.StringVar(value=self.app_state.configure.output_filename)
+        self._filename_var.trace_add("write", self._on_filename_change)
+
+        self._filename_entry = ctk.CTkEntry(
+            filename_frame,
+            width=200,
+            textvariable=self._filename_var,
+            placeholder_text="avatar",
         )
+        self._filename_entry.pack(side="left")
 
-        self._filename_field = ft.TextField(
-            label="Output Filename",
-            width=300,
-            value=self.app_state.configure.output_filename,
-            on_change=self._on_filename_change,
-            hint_text="avatar",
-            suffix=ft.Text(".fbx"),
+        extension_label = ctk.CTkLabel(
+            filename_frame,
+            text=".fbx",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
         )
+        extension_label.pack(side="left", padx=(5, 0))
 
-        self._export_fbx_checkbox = ft.Checkbox(
-            label="Export FBX",
-            value=self.app_state.configure.export_fbx,
-            on_change=self._on_export_fbx_change,
+        export_label = ctk.CTkLabel(
+            content,
+            text="Export Formats",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["subtitle"],
         )
+        export_label.pack(anchor="w")
 
-        self._export_obj_checkbox = ft.Checkbox(
-            label="Export OBJ",
-            value=self.app_state.configure.export_obj,
-            on_change=self._on_export_obj_change,
+        checkbox_frame = ctk.CTkFrame(content, fg_color="transparent")
+        checkbox_frame.pack(anchor="w", pady=(5, 0))
+
+        self._export_fbx_var = ctk.BooleanVar(value=self.app_state.configure.export_fbx)
+        self._export_fbx_checkbox = ctk.CTkCheckBox(
+            checkbox_frame,
+            text="Export FBX",
+            variable=self._export_fbx_var,
+            command=self._on_export_fbx_change,
         )
+        self._export_fbx_checkbox.pack(side="left", padx=(0, 20))
 
-        avatar_options = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Avatar Options",
-                        size=16,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.GREY_700,
-                    ),
-                    ft.Divider(height=1),
-                    self._rig_dropdown,
-                    self._hair_dropdown,
-                ],
-                spacing=15,
-            ),
-            bgcolor=ft.Colors.WHITE,
-            border=ft.Border.all(1, ft.Colors.GREY_300),
-            border_radius=10,
-            padding=20,
-            width=400,
+        self._export_obj_var = ctk.BooleanVar(value=self.app_state.configure.export_obj)
+        self._export_obj_checkbox = ctk.CTkCheckBox(
+            checkbox_frame,
+            text="Export OBJ",
+            variable=self._export_obj_var,
+            command=self._on_export_obj_change,
         )
+        self._export_obj_checkbox.pack(side="left")
 
-        output_options = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Output Settings",
-                        size=16,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.GREY_700,
-                    ),
-                    ft.Divider(height=1),
-                    ft.Row(
-                        controls=[
-                            self._output_path_field,
-                            self._browse_button,
-                        ],
-                        spacing=10,
-                    ),
-                    self._filename_field,
-                    ft.Row(
-                        controls=[
-                            self._export_fbx_checkbox,
-                            self._export_obj_checkbox,
-                        ],
-                        spacing=20,
-                    ),
-                ],
-                spacing=15,
-            ),
-            bgcolor=ft.Colors.WHITE,
-            border=ft.Border.all(1, ft.Colors.GREY_300),
-            border_radius=10,
-            padding=20,
-            width=550,
-        )
+        return panel
 
-        self._validation_text = ft.Text(
-            "",
-            size=12,
-            color=ft.Colors.ORANGE_700,
-            text_align=ft.TextAlign.CENTER,
-        )
-
-        self.content = ft.Column(
-            controls=[
-                header,
-                ft.Row(
-                    controls=[avatar_options, output_options],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    spacing=30,
-                    wrap=True,
-                ),
-                self._validation_text,
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            scroll=ft.ScrollMode.AUTO,
-        )
-
-        self.padding = 30
-        self.expand = True
-
-    def setup(self, page: ft.Page) -> None:
-        """Set up the step after adding to page."""
-        self._folder_picker = ft.FilePicker()
-        self._folder_picker.on_result = self._on_folder_picked
-        page.services.append(self._folder_picker)
-        page.update()
-
-    async def _open_folder_picker(self, e) -> None:
+    def _open_folder_picker(self) -> None:
         """Open folder picker dialog."""
-        if self._folder_picker:
-            await self._folder_picker.get_directory_path(
-                dialog_title="Select Output Directory",
-            )
+        folder_path = filedialog.askdirectory(
+            title="Select Output Directory",
+        )
 
-    def _on_folder_picked(self, e) -> None:
-        """Handle folder picker result."""
-        if e.path:
-            self.app_state.configure.output_directory = Path(e.path)
-            self._output_path_field.value = e.path
+        if folder_path:
+            self.app_state.configure.output_directory = Path(folder_path)
+            self._dir_var.set(folder_path)
             self._update_validation()
             self.app_state.notify_change()
-            self.update()
 
-    def _on_rig_change(self, e: ft.ControlEvent) -> None:
+    def _on_rig_change(self, value: str) -> None:
         """Handle rig type change."""
-        self.app_state.configure.rig_type = RigType(e.control.value)
+        rig_value = self.RIG_OPTIONS[value]
+        self.app_state.configure.rig_type = RigType(rig_value)
         self.app_state.notify_change()
 
-    def _on_hair_change(self, e: ft.ControlEvent) -> None:
+    def _on_hair_change(self, value: str) -> None:
         """Handle hair style change."""
-        self.app_state.configure.hair_style = HairStyle(e.control.value)
+        hair_value = self.HAIR_OPTIONS[value]
+        self.app_state.configure.hair_style = HairStyle(hair_value)
         self.app_state.notify_change()
 
-    def _on_filename_change(self, e: ft.ControlEvent) -> None:
+    def _on_filename_change(self, *args) -> None:
         """Handle filename change."""
-        self.app_state.configure.output_filename = e.control.value or "avatar"
+        self.app_state.configure.output_filename = self._filename_var.get() or "avatar"
         self.app_state.notify_change()
 
-    def _on_export_fbx_change(self, e: ft.ControlEvent) -> None:
+    def _on_export_fbx_change(self) -> None:
         """Handle export FBX checkbox change."""
-        self.app_state.configure.export_fbx = e.control.value
+        self.app_state.configure.export_fbx = self._export_fbx_var.get()
         self.app_state.notify_change()
 
-    def _on_export_obj_change(self, e: ft.ControlEvent) -> None:
+    def _on_export_obj_change(self) -> None:
         """Handle export OBJ checkbox change."""
-        self.app_state.configure.export_obj = e.control.value
+        self.app_state.configure.export_obj = self._export_obj_var.get()
         self.app_state.notify_change()
 
     def _update_validation(self) -> None:
         """Update validation message."""
         if not self.app_state.configure.output_directory:
-            self._validation_text.value = "Please select an output directory"
+            self._validation_label.configure(text="Please select an output directory")
         else:
-            self._validation_text.value = ""
-        self._validation_text.update()
+            self._validation_label.configure(text="")
 
     def validate(self) -> bool:
         """Validate the step is complete."""

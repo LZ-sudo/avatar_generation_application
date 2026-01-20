@@ -4,11 +4,10 @@ Progress display component.
 Shows generation progress with status messages.
 """
 
-import flet as ft
-from typing import Optional
+import customtkinter as ctk
 
 
-class ProgressDisplay(ft.Container):
+class ProgressDisplay(ctk.CTkFrame):
     """
     Progress display component for showing generation status.
 
@@ -18,11 +17,23 @@ class ProgressDisplay(ft.Container):
     - Optional error state
     """
 
+    COLORS = {
+        "progress_normal": "#2563eb",
+        "progress_error": "#dc2626",
+        "progress_complete": "#16a34a",
+        "bg": "#d1d5db",
+        "text_normal": "#374151",
+        "text_error": "#dc2626",
+        "text_complete": "#16a34a",
+        "text_secondary": "#6b7280",
+    }
+
     def __init__(
         self,
+        parent: ctk.CTkFrame,
         width: int = 400,
     ):
-        super().__init__()
+        super().__init__(parent, fg_color="transparent")
         self._width = width
         self._progress = 0.0
         self._status = ""
@@ -31,60 +42,38 @@ class ProgressDisplay(ft.Container):
 
     def _build(self) -> None:
         """Build the progress display component."""
-        self._progress_bar = ft.ProgressBar(
-            value=0,
+        status_frame = ctk.CTkFrame(self, fg_color="transparent")
+        status_frame.pack(pady=(0, 10))
+
+        self._status_label = ctk.CTkLabel(
+            status_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["text_secondary"],
+        )
+        self._status_label.pack()
+
+        progress_frame = ctk.CTkFrame(self, fg_color="transparent")
+        progress_frame.pack()
+
+        self._progress_bar = ctk.CTkProgressBar(
+            progress_frame,
             width=self._width,
-            bar_height=8,
-            color=ft.Colors.BLUE_600,
-            bgcolor=ft.Colors.GREY_300,
+            height=8,
+            progress_color=self.COLORS["progress_normal"],
+            fg_color=self.COLORS["bg"],
         )
+        self._progress_bar.pack(side="left", padx=(0, 10))
+        self._progress_bar.set(0)
 
-        self._percentage_text = ft.Text(
-            "0%",
-            size=14,
-            weight=ft.FontWeight.BOLD,
-            color=ft.Colors.GREY_700,
+        self._percentage_label = ctk.CTkLabel(
+            progress_frame,
+            text="0%",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=self.COLORS["text_normal"],
+            width=50,
         )
-
-        self._status_text = ft.Text(
-            "",
-            size=12,
-            color=ft.Colors.GREY_600,
-            text_align=ft.TextAlign.CENTER,
-        )
-
-        self._progress_ring = ft.ProgressRing(
-            width=20,
-            height=20,
-            stroke_width=2,
-            visible=False,
-        )
-
-        self.content = ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        self._progress_ring,
-                        self._status_text,
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    spacing=10,
-                ),
-                ft.Row(
-                    controls=[
-                        self._progress_bar,
-                        self._percentage_text,
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    spacing=10,
-                ),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10,
-        )
-
-        self.padding = 20
-        self.width = self._width + 80
+        self._percentage_label.pack(side="left")
 
     def set_progress(self, progress: float, status: str = "") -> None:
         """
@@ -98,15 +87,16 @@ class ProgressDisplay(ft.Container):
         self._status = status
         self._is_error = False
 
-        self._progress_bar.value = self._progress
-        self._progress_bar.color = ft.Colors.BLUE_600
-        self._percentage_text.value = f"{int(self._progress * 100)}%"
-        self._percentage_text.color = ft.Colors.GREY_700
-        self._status_text.value = status
-        self._status_text.color = ft.Colors.GREY_600
-        self._progress_ring.visible = self._progress < 1.0 and self._progress > 0
-
-        self.update()
+        self._progress_bar.set(self._progress)
+        self._progress_bar.configure(progress_color=self.COLORS["progress_normal"])
+        self._percentage_label.configure(
+            text=f"{int(self._progress * 100)}%",
+            text_color=self.COLORS["text_normal"],
+        )
+        self._status_label.configure(
+            text=status,
+            text_color=self.COLORS["text_secondary"],
+        )
 
     def set_error(self, error_message: str) -> None:
         """
@@ -116,13 +106,12 @@ class ProgressDisplay(ft.Container):
             error_message: Error message to display
         """
         self._is_error = True
-        self._progress_bar.color = ft.Colors.RED_600
-        self._status_text.value = error_message
-        self._status_text.color = ft.Colors.RED_600
-        self._percentage_text.color = ft.Colors.RED_600
-        self._progress_ring.visible = False
-
-        self.update()
+        self._progress_bar.configure(progress_color=self.COLORS["progress_error"])
+        self._status_label.configure(
+            text=error_message,
+            text_color=self.COLORS["text_error"],
+        )
+        self._percentage_label.configure(text_color=self.COLORS["text_error"])
 
     def set_complete(self, message: str = "Complete!") -> None:
         """
@@ -134,21 +123,20 @@ class ProgressDisplay(ft.Container):
         self._progress = 1.0
         self._is_error = False
 
-        self._progress_bar.value = 1.0
-        self._progress_bar.color = ft.Colors.GREEN_600
-        self._percentage_text.value = "100%"
-        self._percentage_text.color = ft.Colors.GREEN_600
-        self._status_text.value = message
-        self._status_text.color = ft.Colors.GREEN_600
-        self._progress_ring.visible = False
-
-        self.update()
+        self._progress_bar.set(1.0)
+        self._progress_bar.configure(progress_color=self.COLORS["progress_complete"])
+        self._percentage_label.configure(
+            text="100%",
+            text_color=self.COLORS["text_complete"],
+        )
+        self._status_label.configure(
+            text=message,
+            text_color=self.COLORS["text_complete"],
+        )
 
     def reset(self) -> None:
         """Reset the progress display to initial state."""
         self.set_progress(0.0, "")
-        self._progress_ring.visible = False
-        self.update()
 
     @property
     def progress(self) -> float:

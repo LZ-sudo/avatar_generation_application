@@ -4,13 +4,13 @@ Wizard navigation component.
 Displays the step indicator bar and handles navigation between steps.
 """
 
-import flet as ft
-from typing import Callable
+import customtkinter as ctk
+from typing import Callable, Optional
 
 from ..app_state import AppState, WizardStep
 
 
-class WizardNav(ft.Container):
+class WizardNav(ctk.CTkFrame):
     """
     Navigation component showing wizard progress and step indicators.
 
@@ -27,28 +27,47 @@ class WizardNav(ft.Container):
         WizardStep.GENERATE: "Generate",
     }
 
+    COLORS = {
+        "completed_bg": "#16a34a",
+        "current_bg": "#2563eb",
+        "upcoming_bg": "#d1d5db",
+        "completed_fg": "#ffffff",
+        "current_fg": "#ffffff",
+        "upcoming_fg": "#4b5563",
+        "current_label": "#2563eb",
+        "other_label": "#6b7280",
+        "connector_completed": "#16a34a",
+        "connector_upcoming": "#d1d5db",
+    }
+
     def __init__(
         self,
+        parent: ctk.CTkFrame,
         app_state: AppState,
-        on_step_click: Callable[[WizardStep], None] = None,
+        on_step_click: Optional[Callable[[WizardStep], None]] = None,
     ):
-        super().__init__()
+        super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.on_step_click = on_step_click
+        self._indicator_widgets: list = []
         self._build()
 
     def _build(self) -> None:
         """Build the navigation component."""
-        self.content = ft.Row(
-            controls=self._create_step_indicators(),
-            alignment=ft.MainAxisAlignment.CENTER,
-            spacing=0,
-        )
-        self.padding = ft.Padding.symmetric(vertical=20, horizontal=10)
+        self._create_step_indicators()
 
-    def _create_step_indicators(self) -> list[ft.Control]:
+    def _create_step_indicators(self) -> None:
         """Create step indicator controls."""
-        controls = []
+        for widget in self._indicator_widgets:
+            widget.destroy()
+        self._indicator_widgets.clear()
+
+        for child in self.winfo_children():
+            child.destroy()
+
+        container = ctk.CTkFrame(self, fg_color="transparent")
+        container.pack(pady=20, padx=10)
+
         steps = list(WizardStep)
 
         for i, step in enumerate(steps):
@@ -57,92 +76,88 @@ class WizardNav(ft.Container):
             is_clickable = step.value <= self.app_state.current_step.value
 
             indicator = self._create_step_indicator(
+                parent=container,
                 step=step,
                 number=i + 1,
                 is_current=is_current,
                 is_completed=is_completed,
                 is_clickable=is_clickable,
             )
-            controls.append(indicator)
+            indicator.pack(side="left", padx=0)
+            self._indicator_widgets.append(indicator)
 
             if i < len(steps) - 1:
-                connector = self._create_connector(is_completed)
-                controls.append(connector)
-
-        return controls
+                connector = self._create_connector(container, is_completed)
+                connector.pack(side="left", padx=0, pady=(0, 20))
+                self._indicator_widgets.append(connector)
 
     def _create_step_indicator(
         self,
+        parent: ctk.CTkFrame,
         step: WizardStep,
         number: int,
         is_current: bool,
         is_completed: bool,
         is_clickable: bool,
-    ) -> ft.Control:
+    ) -> ctk.CTkFrame:
         """Create a single step indicator."""
-        if is_completed:
-            icon_content = ft.Icon(
-                ft.Icons.CHECK,
-                color=ft.Colors.WHITE,
-                size=20,
-            )
-            bg_color = ft.Colors.GREEN_600
-        elif is_current:
-            icon_content = ft.Text(
-                str(number),
-                color=ft.Colors.WHITE,
-                weight=ft.FontWeight.BOLD,
-                size=14,
-            )
-            bg_color = ft.Colors.BLUE_600
-        else:
-            icon_content = ft.Text(
-                str(number),
-                color=ft.Colors.GREY_600,
-                size=14,
-            )
-            bg_color = ft.Colors.GREY_300
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
 
-        circle = ft.Container(
-            content=icon_content,
+        if is_completed:
+            bg_color = self.COLORS["completed_bg"]
+            text = "\u2713"
+            text_color = self.COLORS["completed_fg"]
+        elif is_current:
+            bg_color = self.COLORS["current_bg"]
+            text = str(number)
+            text_color = self.COLORS["current_fg"]
+        else:
+            bg_color = self.COLORS["upcoming_bg"]
+            text = str(number)
+            text_color = self.COLORS["upcoming_fg"]
+
+        circle = ctk.CTkLabel(
+            frame,
+            text=text,
             width=36,
             height=36,
-            border_radius=18,
-            bgcolor=bg_color,
-            alignment=ft.Alignment(0, 0),
+            corner_radius=18,
+            fg_color=bg_color,
+            text_color=text_color,
+            font=ctk.CTkFont(size=14, weight="bold"),
         )
+        circle.pack()
 
-        label = ft.Text(
-            self.STEP_LABELS[step],
-            size=12,
-            color=ft.Colors.BLUE_600 if is_current else ft.Colors.GREY_600,
-            weight=ft.FontWeight.BOLD if is_current else ft.FontWeight.NORMAL,
-            text_align=ft.TextAlign.CENTER,
+        label_color = self.COLORS["current_label"] if is_current else self.COLORS["other_label"]
+        label_weight = "bold" if is_current else "normal"
+
+        label = ctk.CTkLabel(
+            frame,
+            text=self.STEP_LABELS[step],
+            font=ctk.CTkFont(size=12, weight=label_weight),
+            text_color=label_color,
         )
+        label.pack(pady=(8, 0))
 
-        indicator = ft.Container(
-            content=ft.Column(
-                controls=[circle, label],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
-            ),
-            on_click=lambda e, s=step: self._handle_step_click(s) if is_clickable else None,
-            ink=is_clickable,
-            padding=10,
-        )
+        if is_clickable:
+            circle.bind("<Button-1>", lambda e, s=step: self._handle_step_click(s))
+            label.bind("<Button-1>", lambda e, s=step: self._handle_step_click(s))
+            circle.configure(cursor="hand2")
+            label.configure(cursor="hand2")
 
-        return indicator
+        return frame
 
-    def _create_connector(self, is_completed: bool) -> ft.Control:
+    def _create_connector(self, parent: ctk.CTkFrame, is_completed: bool) -> ctk.CTkFrame:
         """Create a connector line between step indicators."""
-        return ft.Container(
-            content=ft.Divider(
-                color=ft.Colors.GREEN_600 if is_completed else ft.Colors.GREY_300,
-                thickness=2,
-            ),
+        color = self.COLORS["connector_completed"] if is_completed else self.COLORS["connector_upcoming"]
+
+        connector = ctk.CTkFrame(
+            parent,
             width=60,
-            padding=ft.Padding.only(bottom=30),
+            height=2,
+            fg_color=color,
         )
+        return connector
 
     def _handle_step_click(self, step: WizardStep) -> None:
         """Handle click on a step indicator."""
@@ -151,5 +166,4 @@ class WizardNav(ft.Container):
 
     def update_indicators(self) -> None:
         """Refresh the step indicators based on current state."""
-        self.content.controls = self._create_step_indicators()
-        self.update()
+        self._create_step_indicators()

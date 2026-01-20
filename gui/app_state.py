@@ -6,6 +6,8 @@ This module holds all shared state across wizard steps, including:
 - Extracted measurements
 - Configuration options
 - Generation results
+
+Note: This module is UI-framework agnostic and works with any GUI toolkit.
 """
 
 from dataclasses import dataclass, field
@@ -36,6 +38,52 @@ class HairStyle(Enum):
     MEDIUM = "medium"
     LONG = "long"
     CUSTOM = "custom"
+
+
+@dataclass
+class CameraCalibrationState:
+    """State for Camera Calibration feature."""
+    image_directory: Optional[Path] = None
+    checkerboard_cols: int = 8  # Inner corners
+    checkerboard_rows: int = 6  # Inner corners
+    square_size_mm: float = 40.0
+
+    is_calibrating: bool = False
+    progress_message: str = ""
+
+    # Results from current calibration run
+    calibration_success: Optional[bool] = None
+    reprojection_error: Optional[float] = None
+    num_successful_images: int = 0
+    num_failed_images: int = 0
+    error_message: Optional[str] = None
+
+    # Existing calibration status (loaded on startup)
+    existing_calibration_path: Optional[Path] = None
+    existing_reprojection_error: Optional[float] = None
+
+    def get_output_path(self) -> Path:
+        """Get the calibration output path."""
+        return Path("measurements_extraction_module/camera_calibration_settings/calibration.json")
+
+    def load_existing_calibration(self) -> None:
+        """Check if a calibration file exists and load its metadata."""
+        import json
+        output_path = self.get_output_path()
+        if output_path.exists():
+            with open(output_path) as f:
+                data = json.load(f)
+            if data.get("success"):
+                self.existing_calibration_path = output_path
+                self.existing_reprojection_error = data.get("reprojection_error")
+
+    def reset_results(self) -> None:
+        """Reset calibration results for a new run."""
+        self.calibration_success = None
+        self.reprojection_error = None
+        self.num_successful_images = 0
+        self.num_failed_images = 0
+        self.error_message = None
 
 
 @dataclass
@@ -124,6 +172,10 @@ class AppState:
     """
     current_step: WizardStep = WizardStep.IMAGE_INPUT
 
+    # Camera calibration state (separate feature)
+    camera_calibration: CameraCalibrationState = field(default_factory=CameraCalibrationState)
+
+    # Avatar generation wizard states
     image_input: ImageInputState = field(default_factory=ImageInputState)
     measurements: MeasurementsState = field(default_factory=MeasurementsState)
     configure: ConfigureState = field(default_factory=ConfigureState)

@@ -1,6 +1,6 @@
 # Avatar Generator Application - GUI Requirements
 
-# Flet framework for GUI
+# CustomTkinter framework for GUI
 flet>=0.21.0
 
 # Note: The submodules (measurements_extraction_module, mesh_generation_module)

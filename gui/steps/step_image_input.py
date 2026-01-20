@@ -4,131 +4,117 @@ Step 1: Image Input
 Allows the user to select front and side photographs for measurement extraction.
 """
 
-import flet as ft
+import customtkinter as ctk
 from pathlib import Path
 
 from ..app_state import AppState
 from ..components.image_picker import ImagePicker
 
 
-class StepImageInput(ft.Container):
+class StepImageInput(ctk.CTkFrame):
     """
     Image input step for the avatar generation wizard.
 
     Provides two image pickers for front and side views.
     """
 
-    def __init__(self, app_state: AppState):
-        super().__init__()
+    COLORS = {
+        "title": "#1f2937",
+        "subtitle": "#6b7280",
+        "warning": "#c2410c",
+        "tip_bg": "#eff6ff",
+        "tip_title": "#374151",
+        "tip_text": "#6b7280",
+    }
+
+    def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
+        super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self._build()
 
     def _build(self) -> None:
         """Build the step content."""
+        content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        content_frame.pack(expand=True, fill="both", padx=30, pady=30)
+
+        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        header_frame.pack(pady=(0, 20))
+
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="Select Input Images",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=self.COLORS["title"],
+        )
+        title_label.pack()
+
+        subtitle_label = ctk.CTkLabel(
+            header_frame,
+            text="Please provide front and side view photographs for measurement extraction.",
+            font=ctk.CTkFont(size=14),
+            text_color=self.COLORS["subtitle"],
+        )
+        subtitle_label.pack(pady=(8, 0))
+
+        pickers_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        pickers_frame.pack(pady=20)
+
         self._front_picker = ImagePicker(
+            pickers_frame,
             label="Front View",
             description="Full body photo from the front",
             on_image_selected=self._on_front_image_selected,
         )
+        self._front_picker.pack(side="left", padx=20)
 
         self._side_picker = ImagePicker(
+            pickers_frame,
             label="Side View",
             description="Full body photo from the side",
             on_image_selected=self._on_side_image_selected,
         )
+        self._side_picker.pack(side="left", padx=20)
 
-        self._validation_text = ft.Text(
-            "",
-            size=12,
-            color=ft.Colors.ORANGE_700,
-            text_align=ft.TextAlign.CENTER,
+        self._validation_label = ctk.CTkLabel(
+            content_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["warning"],
         )
+        self._validation_label.pack(pady=(10, 0))
 
-        header = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Select Input Images",
-                        size=24,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.GREY_800,
-                    ),
-                    ft.Text(
-                        "Please provide front and side view photographs for measurement extraction.",
-                        size=14,
-                        color=ft.Colors.GREY_600,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
-            ),
-            padding=ft.Padding.only(bottom=20),
+        tips_frame = ctk.CTkFrame(
+            content_frame,
+            fg_color=self.COLORS["tip_bg"],
+            corner_radius=8,
         )
+        tips_frame.pack(pady=(20, 0), fill="x")
 
-        tips = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Tips for best results:",
-                        size=13,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.GREY_700,
-                    ),
-                    ft.Text(
-                        "- Use well-lit photos with neutral background",
-                        size=12,
-                        color=ft.Colors.GREY_600,
-                    ),
-                    ft.Text(
-                        "- Ensure full body is visible in frame",
-                        size=12,
-                        color=ft.Colors.GREY_600,
-                    ),
-                    ft.Text(
-                        "- Wear fitted clothing for accurate measurements",
-                        size=12,
-                        color=ft.Colors.GREY_600,
-                    ),
-                ],
-                spacing=4,
-            ),
-            bgcolor=ft.Colors.BLUE_50,
-            padding=15,
-            border_radius=8,
-            margin=ft.Margin.only(top=20),
+        tips_content = ctk.CTkFrame(tips_frame, fg_color="transparent")
+        tips_content.pack(padx=15, pady=15)
+
+        tips_title = ctk.CTkLabel(
+            tips_content,
+            text="Tips for best results:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=self.COLORS["tip_title"],
         )
+        tips_title.pack(anchor="w")
 
-        image_pickers = ft.Row(
-            controls=[
-                self._front_picker,
-                self._side_picker,
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            spacing=40,
-        )
+        tips = [
+            "- Use well-lit photos with neutral background",
+            "- Ensure full body is visible in frame",
+            "- Wear fitted clothing for accurate measurements",
+        ]
 
-        self.content = ft.Column(
-            controls=[
-                header,
-                image_pickers,
-                self._validation_text,
-                tips,
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            scroll=ft.ScrollMode.AUTO,
-        )
-
-        self.padding = 30
-        self.expand = True
-
-    def setup(self, page: ft.Page) -> None:
-        """
-        Set up the step after adding to page.
-
-        Must be called after the step is added to the page.
-        """
-        self._front_picker.setup_file_picker(page)
-        self._side_picker.setup_file_picker(page)
+        for tip in tips:
+            tip_label = ctk.CTkLabel(
+                tips_content,
+                text=tip,
+                font=ctk.CTkFont(size=12),
+                text_color=self.COLORS["tip_text"],
+            )
+            tip_label.pack(anchor="w", pady=2)
 
         if self.app_state.image_input.front_image_path:
             self._front_picker.set_image(self.app_state.image_input.front_image_path)
@@ -150,15 +136,13 @@ class StepImageInput(ft.Container):
     def _update_validation(self) -> None:
         """Update validation message based on current state."""
         if not self._front_picker.has_image and not self._side_picker.has_image:
-            self._validation_text.value = "Please select both front and side view images"
+            self._validation_label.configure(text="Please select both front and side view images")
         elif not self._front_picker.has_image:
-            self._validation_text.value = "Please select a front view image"
+            self._validation_label.configure(text="Please select a front view image")
         elif not self._side_picker.has_image:
-            self._validation_text.value = "Please select a side view image"
+            self._validation_label.configure(text="Please select a side view image")
         else:
-            self._validation_text.value = ""
-
-        self._validation_text.update()
+            self._validation_label.configure(text="")
 
     def validate(self) -> bool:
         """Validate the step is complete."""

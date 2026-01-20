@@ -69,6 +69,28 @@ class BackendInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def calibrate_camera(
+        self,
+        image_dir: Path,
+        checkerboard_size: tuple[int, int],
+        square_size_mm: float,
+        output_path: Path,
+    ) -> dict:
+        """
+        Calibrate camera using checkerboard pattern images.
+
+        Args:
+            image_dir: Directory containing checkerboard images
+            checkerboard_size: Inner corner count (columns, rows)
+            square_size_mm: Physical size of each square in mm
+            output_path: Path to save calibration JSON
+
+        Returns:
+            Dictionary containing calibration results
+        """
+        pass
+
 
 class MockBackendInterface(BackendInterface):
     """
@@ -145,6 +167,43 @@ class MockBackendInterface(BackendInterface):
         """
         print(f"[Mock] Would open in Blender: {file_path}")
 
+    def calibrate_camera(
+        self,
+        image_dir: Path,
+        checkerboard_size: tuple[int, int],
+        square_size_mm: float,
+        output_path: Path,
+    ) -> dict:
+        """
+        Mock camera calibration for testing.
+        """
+        time.sleep(2.0)
+
+        # Create output directory if needed
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Mock calibration results
+        import json
+        results = {
+            "success": True,
+            "camera_matrix": [
+                [1000.0, 0.0, 640.0],
+                [0.0, 1000.0, 480.0],
+                [0.0, 0.0, 1.0],
+            ],
+            "distortion_coefficients": [[0.1, -0.2, 0.001, 0.001, 0.05]],
+            "reprojection_error": 0.35,
+            "num_successful_images": 10,
+            "num_failed_images": 2,
+            "successful_images": [],
+            "failed_images": [],
+        }
+
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+
+        return results
+
 
 class RealBackendInterface(BackendInterface):
     """
@@ -205,6 +264,31 @@ class RealBackendInterface(BackendInterface):
         raise NotImplementedError(
             "Real backend not yet implemented. "
             "Use MockBackendInterface for testing."
+        )
+
+    def calibrate_camera(
+        self,
+        image_dir: Path,
+        checkerboard_size: tuple[int, int],
+        square_size_mm: float,
+        output_path: Path,
+    ) -> dict:
+        """
+        Calibrate camera using the measurements_extraction_module.
+        """
+        from measurements_extraction_module.calibrate_camera import (
+            calibrate_camera_from_images
+        )
+
+        # Ensure output directory exists
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        return calibrate_camera_from_images(
+            image_dir=str(image_dir),
+            checkerboard_size=checkerboard_size,
+            square_size_mm=square_size_mm,
+            output_path=str(output_path),
+            visualize=False,
         )
 
 
