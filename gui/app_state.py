@@ -56,10 +56,18 @@ class ArucoSettingsState:
     bottom_left: MarkerPosition = field(default_factory=lambda: MarkerPosition(0, 8.2))
     bottom_right: MarkerPosition = field(default_factory=lambda: MarkerPosition(83, 8.2))
 
+    def get_config_dir(self) -> Path:
+        """Get the user_configurations directory path."""
+        project_root = Path(__file__).parent.parent
+        return project_root / "user_configurations"
+
     def get_config_path(self) -> Path:
         """Get the marker_details.json path."""
-        project_root = Path(__file__).parent.parent
-        return project_root / "measurements_extraction_module" / "marker_details.json"
+        return self.get_config_dir() / "marker_details.json"
+
+    def ensure_config_dir_exists(self) -> None:
+        """Create the configuration directory if it doesn't exist."""
+        self.get_config_dir().mkdir(parents=True, exist_ok=True)
 
     def load_from_file(self) -> bool:
         """Load settings from marker_details.json. Returns True if successful."""
@@ -99,6 +107,7 @@ class ArucoSettingsState:
     def save_to_file(self) -> bool:
         """Save settings to marker_details.json. Returns True if successful."""
         import json
+        self.ensure_config_dir_exists()
         config_path = self.get_config_path()
         try:
             data = {
@@ -149,7 +158,7 @@ class CameraCalibrationState:
     def get_output_path(self) -> Path:
         """Get the calibration output path (absolute path)."""
         project_root = Path(__file__).parent.parent
-        return project_root / "measurements_extraction_module" / "camera_calibration_settings" / "calibration.json"
+        return project_root / "user_configurations" / "calibration.json"
 
     def load_existing_calibration(self) -> None:
         """Check if a calibration file exists and load its metadata."""

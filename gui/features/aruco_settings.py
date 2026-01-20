@@ -364,9 +364,11 @@ class ArucoSettingsView(ctk.CTkFrame):
                 text_color=self.COLORS["text_secondary"],
             )
         else:
+            self._update_current_settings_display()
+            self._populate_input_fields()
             self._status_label.configure(
-                text="No configuration file found",
-                text_color=self.COLORS["status_error"],
+                text="Using default settings (no configuration file found)",
+                text_color=self.COLORS["text_secondary"],
             )
 
     def _update_current_settings_display(self) -> None:
