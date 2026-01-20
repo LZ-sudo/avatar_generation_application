@@ -38,12 +38,17 @@ class CameraCalibrationView(ctk.CTkFrame):
         "text_secondary": "#6b7280",
     }
 
+    PANEL_WIDTH = 340
+
+    # Fixed image size for the checkerboard example (maintains ~0.76 aspect ratio)
+    EXAMPLE_IMAGE_SIZE = (250, 340)
+
     def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
-        self._build()
 
+        self._build()
         self._load_existing_calibration()
 
     def _build(self) -> None:
@@ -54,11 +59,8 @@ class CameraCalibrationView(ctk.CTkFrame):
         header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         header_frame.pack(pady=(0, 20))
 
-        title_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
-        title_frame.pack()
-
         title_label = ctk.CTkLabel(
-            title_frame,
+            header_frame,
             text="Camera Calibration",
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=self.COLORS["title"],
@@ -73,17 +75,17 @@ class CameraCalibrationView(ctk.CTkFrame):
         )
         subtitle_label.pack(pady=(8, 0))
 
-        self._status_banner = self._create_status_banner(content_frame)
-        self._status_banner.pack(pady=(0, 20))
+        input_panel = self._create_input_panel(content_frame)
+        input_panel.pack(fill="x", pady=(0, 15))
 
-        settings_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        settings_frame.pack(pady=20)
+        panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        panels_frame.pack(fill="both", expand=True, pady=(0, 15))
 
-        input_settings = self._create_input_settings(settings_frame)
-        input_settings.pack(side="left", padx=15)
+        checkerboard_panel = self._create_checkerboard_panel(panels_frame)
+        checkerboard_panel.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
-        checkerboard_settings = self._create_checkerboard_settings(settings_frame)
-        checkerboard_settings.pack(side="left", padx=15)
+        self._results_panel = self._create_results_panel(panels_frame)
+        self._results_panel.pack(side="left", fill="both", expand=True, padx=(8, 0))
 
         self._calibrate_button = ctk.CTkButton(
             content_frame,
@@ -92,45 +94,12 @@ class CameraCalibrationView(ctk.CTkFrame):
             state="disabled",
             fg_color="#2563eb",
             hover_color="#1d4ed8",
+            width=200,
         )
-        self._calibrate_button.pack(pady=20)
+        self._calibrate_button.pack(pady=15)
 
-        self._results_panel = self._create_results_panel(content_frame)
-
-    def _create_status_banner(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
-        """Create the existing calibration status banner."""
-        banner = ctk.CTkFrame(
-            parent,
-            fg_color=self.COLORS["status_bg"],
-            corner_radius=8,
-            border_width=1,
-            border_color=self.COLORS["panel_border"],
-        )
-
-        content = ctk.CTkFrame(banner, fg_color="transparent")
-        content.pack(padx=20, pady=12)
-
-        self._status_icon_label = ctk.CTkLabel(
-            content,
-            text="X",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["status_not_calibrated"],
-            width=20,
-        )
-        self._status_icon_label.pack(side="left")
-
-        self._status_text_label = ctk.CTkLabel(
-            content,
-            text="Not calibrated",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["text"],
-        )
-        self._status_text_label.pack(side="left", padx=(10, 0))
-
-        return banner
-
-    def _create_input_settings(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
-        """Create the image directory input section."""
+    def _create_input_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
+        """Create the image directory input panel."""
         panel = ctk.CTkFrame(
             parent,
             fg_color=self.COLORS["panel_bg"],
@@ -140,31 +109,30 @@ class CameraCalibrationView(ctk.CTkFrame):
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20)
+        content.pack(fill="x", padx=20, pady=15)
 
         title = ctk.CTkLabel(
             content,
-            text="Input Images",
+            text="Input Directory of Calibration Images",
             font=ctk.CTkFont(size=16, weight="bold"),
             text_color=self.COLORS["section_title"],
         )
         title.pack(anchor="w")
 
         separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
-        separator.pack(fill="x", pady=(10, 15))
+        separator.pack(fill="x", pady=(10, 12))
 
         dir_frame = ctk.CTkFrame(content, fg_color="transparent")
-        dir_frame.pack(anchor="w")
+        dir_frame.pack(fill="x")
 
         self._dir_var = ctk.StringVar()
         self._dir_entry = ctk.CTkEntry(
             dir_frame,
-            width=280,
             textvariable=self._dir_var,
             state="disabled",
-            placeholder_text="Select folder with checkerboard images",
+            placeholder_text="Select folder containing checkerboard images",
         )
-        self._dir_entry.pack(side="left")
+        self._dir_entry.pack(side="left", fill="x", expand=True)
 
         browse_button = ctk.CTkButton(
             dir_frame,
@@ -176,8 +144,8 @@ class CameraCalibrationView(ctk.CTkFrame):
 
         return panel
 
-    def _create_checkerboard_settings(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
-        """Create the checkerboard settings section."""
+    def _create_checkerboard_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
+        """Create the checkerboard settings panel."""
         panel = ctk.CTkFrame(
             parent,
             fg_color=self.COLORS["panel_bg"],
@@ -187,7 +155,7 @@ class CameraCalibrationView(ctk.CTkFrame):
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20)
+        content.pack(fill="both", expand=True, padx=20, pady=15)
 
         title = ctk.CTkLabel(
             content,
@@ -198,40 +166,13 @@ class CameraCalibrationView(ctk.CTkFrame):
         title.pack(anchor="w")
 
         separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
-        separator.pack(fill="x", pady=(10, 15))
+        separator.pack(fill="x", pady=(10, 12))
 
         body_frame = ctk.CTkFrame(content, fg_color="transparent")
-        body_frame.pack(fill="x")
-
-        example_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
-        example_frame.pack(side="left", padx=(0, 20))
-
-        example_image_path = Path(__file__).parent.parent / "images" / "checkerboard_example.png"
-        if example_image_path.exists():
-            pil_image = Image.open(example_image_path)
-            pil_image.thumbnail((180, 180), Image.Resampling.LANCZOS)
-            self._example_ctk_image = ctk.CTkImage(
-                light_image=pil_image,
-                dark_image=pil_image,
-                size=(pil_image.width, pil_image.height),
-            )
-            example_label = ctk.CTkLabel(
-                example_frame,
-                image=self._example_ctk_image,
-                text="",
-            )
-            example_label.pack()
-
-            caption_label = ctk.CTkLabel(
-                example_frame,
-                text="Inner corners guide",
-                font=ctk.CTkFont(size=11),
-                text_color=self.COLORS["text_secondary"],
-            )
-            caption_label.pack(pady=(5, 0))
+        body_frame.pack(fill="both", expand=True)
 
         fields_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
-        fields_frame.pack(side="left", fill="y")
+        fields_frame.pack(side="right", fill="y", padx=(15, 0))
 
         cols_label = ctk.CTkLabel(
             fields_frame,
@@ -245,10 +186,10 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._cols_var.trace_add("write", self._on_cols_change)
         self._cols_entry = ctk.CTkEntry(
             fields_frame,
-            width=180,
+            width=140,
             textvariable=self._cols_var,
         )
-        self._cols_entry.pack(anchor="w", pady=(5, 15))
+        self._cols_entry.pack(anchor="w", pady=(5, 12))
 
         rows_label = ctk.CTkLabel(
             fields_frame,
@@ -262,10 +203,10 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._rows_var.trace_add("write", self._on_rows_change)
         self._rows_entry = ctk.CTkEntry(
             fields_frame,
-            width=180,
+            width=140,
             textvariable=self._rows_var,
         )
-        self._rows_entry.pack(anchor="w", pady=(5, 15))
+        self._rows_entry.pack(anchor="w", pady=(5, 12))
 
         size_label = ctk.CTkLabel(
             fields_frame,
@@ -279,10 +220,30 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._square_size_var.trace_add("write", self._on_square_size_change)
         self._square_size_entry = ctk.CTkEntry(
             fields_frame,
-            width=180,
+            width=140,
             textvariable=self._square_size_var,
         )
         self._square_size_entry.pack(anchor="w", pady=(5, 0))
+
+        example_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
+        example_frame.pack(side="left", fill="both", expand=True)
+
+        example_image_path = Path(__file__).parent.parent / "images" / "checkerboard_example.png"
+        if example_image_path.exists():
+            original_image = Image.open(example_image_path)
+            example_ctk_image = ctk.CTkImage(
+                light_image=original_image,
+                dark_image=original_image,
+                size=self.EXAMPLE_IMAGE_SIZE,
+            )
+            example_image_label = ctk.CTkLabel(
+                example_frame,
+                image=example_ctk_image,
+                text="",
+            )
+            example_image_label.pack(expand=True)
+            # Keep reference to prevent garbage collection
+            example_image_label._ctk_image = example_ctk_image
 
         return panel
 
@@ -294,30 +255,27 @@ class CameraCalibrationView(ctk.CTkFrame):
             border_width=1,
             border_color=self.COLORS["panel_border"],
             corner_radius=10,
-            width=500,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20, fill="x")
-
-        header_frame = ctk.CTkFrame(content, fg_color="transparent")
-        header_frame.pack(fill="x")
+        content.pack(fill="both", expand=True, padx=20, pady=15)
 
         title = ctk.CTkLabel(
-            header_frame,
+            content,
             text="Calibration Results",
             font=ctk.CTkFont(size=16, weight="bold"),
             text_color=self.COLORS["section_title"],
         )
-        title.pack(side="left")
+        title.pack(anchor="w")
 
         separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
-        separator.pack(fill="x", pady=(10, 15))
+        separator.pack(fill="x", pady=(10, 12))
 
         self._results_status_label = ctk.CTkLabel(
             content,
-            text="",
+            text="No calibration run yet",
             font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=self.COLORS["text_secondary"],
         )
         self._results_status_label.pack(anchor="w")
 
@@ -327,7 +285,7 @@ class CameraCalibrationView(ctk.CTkFrame):
             font=ctk.CTkFont(size=13),
             text_color=self.COLORS["text"],
         )
-        self._results_images_label.pack(anchor="w", pady=(5, 0))
+        self._results_images_label.pack(anchor="w", pady=(8, 0))
 
         self._results_error_label = ctk.CTkLabel(
             content,
@@ -335,45 +293,25 @@ class CameraCalibrationView(ctk.CTkFrame):
             font=ctk.CTkFont(size=13),
             text_color=self.COLORS["text"],
         )
-        self._results_error_label.pack(anchor="w", pady=(5, 0))
+        self._results_error_label.pack(anchor="w", pady=(4, 0))
 
         self._results_quality_label = ctk.CTkLabel(
             content,
             text="",
             font=ctk.CTkFont(size=13),
         )
-        self._results_quality_label.pack(anchor="w", pady=(5, 0))
+        self._results_quality_label.pack(anchor="w", pady=(4, 0))
 
         self._results_output_label = ctk.CTkLabel(
             content,
             text="",
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["text_secondary"],
+            wraplength=280,
         )
-        self._results_output_label.pack(anchor="w", pady=(5, 0))
+        self._results_output_label.pack(anchor="w", pady=(8, 0))
 
         return panel
-
-    def _load_existing_calibration(self) -> None:
-        """Load and display existing calibration status."""
-        self.app_state.camera_calibration.load_existing_calibration()
-
-        if self.app_state.camera_calibration.existing_calibration_path:
-            error = self.app_state.camera_calibration.existing_reprojection_error
-            quality = self._get_quality_label(error)
-            self._status_icon_label.configure(
-                text="\u2713",
-                text_color=self.COLORS["status_calibrated"],
-            )
-            self._status_text_label.configure(
-                text=f"Calibrated - Error: {error:.2f} px ({quality})",
-            )
-        else:
-            self._status_icon_label.configure(
-                text="X",
-                text_color=self.COLORS["status_not_calibrated"],
-            )
-            self._status_text_label.configure(text="Not calibrated")
 
     def _get_quality_label(self, error: float) -> str:
         """Get quality label based on reprojection error."""
@@ -385,6 +323,54 @@ class CameraCalibrationView(ctk.CTkFrame):
             return "Acceptable"
         else:
             return "Poor"
+
+    def _load_existing_calibration(self) -> None:
+        """Load and display existing calibration if available."""
+        import json
+
+        output_path = self.app_state.camera_calibration.get_output_path()
+        if not output_path.exists():
+            return
+
+        try:
+            with open(output_path) as f:
+                data = json.load(f)
+
+            if not data.get("success"):
+                return
+
+            reprojection_error = data.get("reprojection_error")
+            num_successful = data.get("num_successful_images", 0)
+            num_failed = data.get("num_failed_images", 0)
+
+            self._results_status_label.configure(
+                text="Calibrated",
+                text_color=self.COLORS["status_calibrated"],
+            )
+            self._results_images_label.configure(
+                text=f"Images processed: {num_successful}/{num_successful + num_failed}",
+            )
+            self._results_error_label.configure(
+                text=f"Reprojection error: {reprojection_error:.4f} px",
+            )
+
+            quality = self._get_quality_label(reprojection_error)
+            if reprojection_error < 1.0:
+                quality_color = self.COLORS["status_calibrated"]
+            elif reprojection_error < 2.0:
+                quality_color = self.COLORS["status_orange"]
+            else:
+                quality_color = self.COLORS["status_red"]
+
+            self._results_quality_label.configure(
+                text=f"Quality: {quality}",
+                text_color=quality_color,
+            )
+            self._results_output_label.configure(
+                text=f"Loaded from: {output_path.name}",
+            )
+        except (json.JSONDecodeError, KeyError):
+            pass
 
     def _open_folder_picker(self) -> None:
         """Open folder picker dialog."""
@@ -436,7 +422,6 @@ class CameraCalibrationView(ctk.CTkFrame):
         self.app_state.camera_calibration.reset_results()
 
         self._calibrate_button.configure(state="disabled", text="Calibrating...")
-        self._results_panel.pack(pady=20)
         self._results_status_label.configure(
             text="Calibrating...",
             text_color=self.COLORS["status_blue"],
@@ -509,10 +494,8 @@ class CameraCalibrationView(ctk.CTkFrame):
                 text_color=quality_color,
             )
             self._results_output_label.configure(
-                text=f"Output: {state.get_output_path()}",
+                text=f"Saved to: {state.get_output_path().name}",
             )
-
-            self._load_existing_calibration()
         else:
             self._results_status_label.configure(
                 text="Failed",

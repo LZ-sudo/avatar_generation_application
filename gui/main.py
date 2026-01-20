@@ -42,8 +42,8 @@ class AvatarGeneratorApp(ctk.CTk):
     def _setup_window(self) -> None:
         """Configure window settings."""
         self.title("Avatar Generator")
-        self.geometry("1100x800")
-        self.minsize(800, 600)
+        self.geometry("1200x900")
+        self.resizable(False, False)
 
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
