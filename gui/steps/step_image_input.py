@@ -168,44 +168,130 @@ class StepImageInput(ctk.CTkFrame):
         right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
         right_column.pack(side="left", fill="y")
 
-        # Height input panel
-        height_panel = ctk.CTkFrame(
+        # Subject's Details panel
+        details_panel = ctk.CTkFrame(
             right_column,
             fg_color=self.COLORS["panel_bg"],
             border_width=1,
             border_color=self.COLORS["panel_border"],
             corner_radius=10,
         )
-        height_panel.pack(fill="x", pady=(0, 15))
+        details_panel.pack(fill="x", pady=(0, 10))
 
-        height_content = ctk.CTkFrame(height_panel, fg_color="transparent")
-        height_content.pack(padx=20, pady=15)
+        details_content = ctk.CTkFrame(details_panel, fg_color="transparent")
+        details_content.pack(padx=15, pady=12)
 
-        height_label = ctk.CTkLabel(
-            height_content,
-            text="Subject Height",
+        details_label = ctk.CTkLabel(
+            details_content,
+            text="Subject's Details",
             font=ctk.CTkFont(size=14, weight="bold"),
             text_color=self.COLORS["label"],
         )
-        height_label.pack(anchor="w")
+        details_label.pack(anchor="w", pady=(0, 8))
 
-        height_desc = ctk.CTkLabel(
-            height_content,
-            text="Enter the subject's actual height in centimeters",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["subtitle"],
+        # Gender selection
+        gender_frame = ctk.CTkFrame(details_content, fg_color="transparent")
+        gender_frame.pack(anchor="w", fill="x", pady=(0, 6))
+
+        gender_label_frame = ctk.CTkFrame(gender_frame, fg_color="transparent")
+        gender_label_frame.pack(anchor="w")
+
+        gender_icon = ctk.CTkLabel(
+            gender_label_frame,
+            text="\u2642\u2640",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["label"],
         )
-        height_desc.pack(anchor="w", pady=(2, 10))
+        gender_icon.pack(side="left")
 
-        height_input_frame = ctk.CTkFrame(height_content, fg_color="transparent")
-        height_input_frame.pack(anchor="w")
+        gender_label = ctk.CTkLabel(
+            gender_label_frame,
+            text="Gender",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["label"],
+        )
+        gender_label.pack(side="left", padx=(4, 0))
+
+        self._gender_var = ctk.StringVar(value="")
+        self._gender_dropdown = ctk.CTkOptionMenu(
+            gender_frame,
+            width=180,
+            height=28,
+            values=["Male", "Female"],
+            variable=self._gender_var,
+            command=self._on_gender_change,
+        )
+        self._gender_dropdown.set("Select gender")
+        self._gender_dropdown.pack(anchor="w", pady=(2, 0))
+
+        # Race selection
+        race_frame = ctk.CTkFrame(details_content, fg_color="transparent")
+        race_frame.pack(anchor="w", fill="x", pady=(0, 6))
+
+        race_label_frame = ctk.CTkFrame(race_frame, fg_color="transparent")
+        race_label_frame.pack(anchor="w")
+
+        race_icon = ctk.CTkLabel(
+            race_label_frame,
+            text="\u263A",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["label"],
+        )
+        race_icon.pack(side="left")
+
+        race_label = ctk.CTkLabel(
+            race_label_frame,
+            text="Race",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["label"],
+        )
+        race_label.pack(side="left", padx=(4, 0))
+
+        self._race_var = ctk.StringVar(value="")
+        self._race_dropdown = ctk.CTkOptionMenu(
+            race_frame,
+            width=180,
+            height=28,
+            values=["Asian", "Caucasian"],
+            variable=self._race_var,
+            command=self._on_race_change,
+        )
+        self._race_dropdown.set("Select race")
+        self._race_dropdown.pack(anchor="w", pady=(2, 0))
+
+        # Height input
+        height_frame = ctk.CTkFrame(details_content, fg_color="transparent")
+        height_frame.pack(anchor="w", fill="x")
+
+        height_label_frame = ctk.CTkFrame(height_frame, fg_color="transparent")
+        height_label_frame.pack(anchor="w")
+
+        height_icon = ctk.CTkLabel(
+            height_label_frame,
+            text="\u2195",
+            font=ctk.CTkFont(size=13),
+            text_color=self.COLORS["label"],
+        )
+        height_icon.pack(side="left")
+
+        height_label = ctk.CTkLabel(
+            height_label_frame,
+            text="Height",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["label"],
+        )
+        height_label.pack(side="left", padx=(4, 0))
+
+        height_input_frame = ctk.CTkFrame(height_frame, fg_color="transparent")
+        height_input_frame.pack(anchor="w", pady=(2, 0))
 
         self._height_var = ctk.StringVar()
         self._height_var.trace_add("write", self._on_height_change)
 
         self._height_entry = ctk.CTkEntry(
             height_input_frame,
-            width=120,
+            width=130,
+            height=28,
             textvariable=self._height_var,
             placeholder_text="e.g., 170",
             justify="right",
@@ -215,10 +301,10 @@ class StepImageInput(ctk.CTkFrame):
         height_unit = ctk.CTkLabel(
             height_input_frame,
             text="cm",
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=12),
             text_color=self.COLORS["label"],
         )
-        height_unit.pack(side="left", padx=(8, 0))
+        height_unit.pack(side="left", padx=(6, 0))
 
         # Configuration status panel
         status_panel = ctk.CTkFrame(
@@ -228,10 +314,10 @@ class StepImageInput(ctk.CTkFrame):
             border_color=self.COLORS["panel_border"],
             corner_radius=10,
         )
-        status_panel.pack(fill="x", pady=(0, 15))
+        status_panel.pack(fill="x", pady=(0, 10))
 
         status_content = ctk.CTkFrame(status_panel, fg_color="transparent")
-        status_content.pack(padx=20, pady=15)
+        status_content.pack(padx=15, pady=12)
 
         status_label = ctk.CTkLabel(
             status_content,
@@ -239,14 +325,14 @@ class StepImageInput(ctk.CTkFrame):
             font=ctk.CTkFont(size=14, weight="bold"),
             text_color=self.COLORS["label"],
         )
-        status_label.pack(anchor="w", pady=(0, 10))
+        status_label.pack(anchor="w", pady=(0, 8))
 
         self._camera_status = StatusIndicator(
             status_content,
             label="Camera Calibration",
             is_valid=False,
         )
-        self._camera_status.pack(anchor="w", pady=(0, 8))
+        self._camera_status.pack(anchor="w", pady=(0, 4))
 
         self._aruco_status = StatusIndicator(
             status_content,
@@ -274,7 +360,7 @@ class StepImageInput(ctk.CTkFrame):
             command=self._extract_measurements,
             state="disabled",
         )
-        self._extract_button.pack(pady=(15, 0))
+        self._extract_button.pack(pady=(0, 0))
 
         # Status label for extraction
         self._status_label = ctk.CTkLabel(
@@ -283,11 +369,17 @@ class StepImageInput(ctk.CTkFrame):
             font=ctk.CTkFont(size=12),
             text_color=self.COLORS["status_blue"],
         )
-        self._status_label.pack(pady=(10, 0))
+        self._status_label.pack(pady=(5, 0))
 
         # Restore existing state
         if self.app_state.image_input.front_image_path:
             self._front_picker.set_image(self.app_state.image_input.front_image_path)
+        if self.app_state.image_input.gender:
+            self._gender_var.set(self.app_state.image_input.gender.capitalize())
+            self._gender_dropdown.set(self.app_state.image_input.gender.capitalize())
+        if self.app_state.image_input.race:
+            self._race_var.set(self.app_state.image_input.race.capitalize())
+            self._race_dropdown.set(self.app_state.image_input.race.capitalize())
         if self.app_state.image_input.height_cm:
             self._height_var.set(str(self.app_state.image_input.height_cm))
 
@@ -304,6 +396,24 @@ class StepImageInput(ctk.CTkFrame):
             self.app_state.image_input.height_cm = value
         except ValueError:
             self.app_state.image_input.height_cm = None
+        self._update_validation()
+        self.app_state.notify_change()
+
+    def _on_gender_change(self, value: str) -> None:
+        """Handle gender selection change."""
+        if value and value != "Select gender":
+            self.app_state.image_input.gender = value.lower()
+        else:
+            self.app_state.image_input.gender = None
+        self._update_validation()
+        self.app_state.notify_change()
+
+    def _on_race_change(self, value: str) -> None:
+        """Handle race selection change."""
+        if value and value != "Select race":
+            self.app_state.image_input.race = value.lower()
+        else:
+            self.app_state.image_input.race = None
         self._update_validation()
         self.app_state.notify_change()
 
@@ -330,6 +440,10 @@ class StepImageInput(ctk.CTkFrame):
 
         if not state.front_image_path:
             missing.append("front view image")
+        if not state.gender:
+            missing.append("gender")
+        if not state.race:
+            missing.append("race")
         if not state.height_cm:
             missing.append("subject height")
         if not state.camera_calibration_valid:
@@ -374,6 +488,8 @@ class StepImageInput(ctk.CTkFrame):
                 height_cm=self.app_state.image_input.height_cm,
                 camera_calibration_path=self.app_state.camera_calibration.get_output_path(),
                 marker_details_path=self.app_state.aruco_settings.get_config_path(),
+                gender=self.app_state.image_input.gender,
+                race=self.app_state.image_input.race,
             )
             self.after(0, lambda: self._on_extraction_complete(result))
         except Exception as e:

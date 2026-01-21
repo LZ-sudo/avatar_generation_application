@@ -25,6 +25,8 @@ class BackendInterface(ABC):
         height_cm: float,
         camera_calibration_path: Path,
         marker_details_path: Path,
+        gender: str,
+        race: str,
     ) -> dict:
         """
         Extract body measurements from front image using calibration data.
@@ -34,9 +36,11 @@ class BackendInterface(ABC):
             height_cm: Subject's known height in centimeters
             camera_calibration_path: Path to camera calibration JSON
             marker_details_path: Path to ArUco marker details JSON
+            gender: Subject's gender ("male" or "female")
+            race: Subject's race ("asian" or "caucasian")
 
         Returns:
-            Dictionary containing body_measurements, hair_measurements, and visualization_path
+            Dictionary containing gender, race, body_measurements, hair_measurements, and visualization_path
         """
         pass
 
@@ -116,11 +120,14 @@ class RealBackendInterface(BackendInterface):
         height_cm: float,
         camera_calibration_path: Path,
         marker_details_path: Path,
+        gender: str,
+        race: str,
     ) -> dict:
         """
         Extract measurements using the measurements_extraction_module.
 
         Runs the complete_measurements.py script using the submodule's venv Python.
+        After extraction, appends gender and race to the measurements.json file.
         """
         project_root = Path(__file__).parent.parent
         module_path = project_root / "measurements_extraction_module"
@@ -169,14 +176,27 @@ class RealBackendInterface(BackendInterface):
         with open(output_measurements) as f:
             measurements = json.load(f)
 
+        # Add gender and race to measurements and save back
+        updated_measurements = {
+            "gender": gender,
+            "race": race,
+            "body_measurements": measurements.get("body_measurements", {}),
+            "hair_measurements": measurements.get("hair_measurements", {}),
+        }
+
+        with open(output_measurements, "w") as f:
+            json.dump(updated_measurements, f, indent=2)
+
         # Check for visualization image
         visualization_path = visualization_dir / "aruco_backdrop_detection.jpg"
         if not visualization_path.exists():
             visualization_path = None
 
         return {
-            "body_measurements": measurements.get("body_measurements", {}),
-            "hair_measurements": measurements.get("hair_measurements", {}),
+            "gender": gender,
+            "race": race,
+            "body_measurements": updated_measurements["body_measurements"],
+            "hair_measurements": updated_measurements["hair_measurements"],
             "visualization_path": str(visualization_path) if visualization_path else None,
         }
 

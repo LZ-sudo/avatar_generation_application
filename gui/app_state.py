@@ -185,6 +185,8 @@ class ImageInputState:
     """State for Step 1: Image Input and Measurement Extraction."""
     front_image_path: Optional[Path] = None
     height_cm: Optional[float] = None
+    gender: Optional[str] = None  # "male" or "female"
+    race: Optional[str] = None  # "asian" or "caucasian"
 
     # Status of required configurations
     camera_calibration_valid: bool = False
@@ -199,6 +201,8 @@ class ImageInputState:
         return (
             self.front_image_path is not None
             and self.height_cm is not None
+            and self.gender is not None
+            and self.race is not None
             and self.camera_calibration_valid
             and self.aruco_settings_valid
         )
