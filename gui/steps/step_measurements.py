@@ -12,84 +12,14 @@ import threading
 
 from ..app_state import AppState
 from ..backend_interface import BackendInterface
-
-
-class MeasurementField(ctk.CTkFrame):
-    """A single measurement input field with label and unit."""
-
-    COLORS = {
-        "label": "#374151",
-    }
-
-    def __init__(
-        self,
-        parent: ctk.CTkFrame,
-        label: str,
-        unit: str = "cm",
-        value: Optional[float] = None,
-        on_change: Optional[Callable[[Optional[float]], None]] = None,
-    ):
-        super().__init__(parent, fg_color="transparent")
-        self.label_text = label
-        self.unit = unit
-        self.on_value_change = on_change
-
-        self._label = ctk.CTkLabel(
-            self,
-            text=label,
-            font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["label"],
-            width=160,
-            anchor="w",
-        )
-        self._label.pack(side="left")
-
-        self._entry_var = ctk.StringVar(value=str(value) if value is not None else "")
-        self._entry_var.trace_add("write", self._handle_change)
-
-        entry_frame = ctk.CTkFrame(self, fg_color="transparent")
-        entry_frame.pack(side="left")
-
-        self._entry = ctk.CTkEntry(
-            entry_frame,
-            width=70,
-            textvariable=self._entry_var,
-            justify="right",
-        )
-        self._entry.pack(side="left")
-
-        unit_label = ctk.CTkLabel(
-            entry_frame,
-            text=unit,
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label"],
-            width=25,
-        )
-        unit_label.pack(side="left", padx=(5, 0))
-
-    def _handle_change(self, *args) -> None:
-        """Handle value change."""
-        try:
-            value = float(self._entry_var.get()) if self._entry_var.get() else None
-            if self.on_value_change:
-                self.on_value_change(value)
-        except ValueError:
-            pass
-
-    def set_value(self, value: Optional[float]) -> None:
-        """Set the field value."""
-        if value is not None:
-            self._entry_var.set(f"{value:.1f}")
-        else:
-            self._entry_var.set("")
-
-    @property
-    def value(self) -> Optional[float]:
-        """Get the current value."""
-        try:
-            return float(self._entry_var.get()) if self._entry_var.get() else None
-        except ValueError:
-            return None
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    SectionTitle,
+    LabeledInputField,
+    ActionButton,
+    StatusLabel,
+)
 
 
 class StepMeasurements(ctk.CTkFrame):
@@ -98,19 +28,6 @@ class StepMeasurements(ctk.CTkFrame):
 
     Displays extracted measurements with visualization and allows manual editing.
     """
-
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "panel_bg": "#ffffff",
-        "panel_border": "#d1d5db",
-        "info_icon": "#2563eb",
-        "info_text": "#6b7280",
-        "section_title": "#374151",
-        "status_blue": "#2563eb",
-        "status_green": "#16a34a",
-        "status_red": "#dc2626",
-    }
 
     VISUALIZATION_SIZE = (350, 450)
 
@@ -125,7 +42,7 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state = app_state
         self.backend = backend
         self.on_navigate_next = on_navigate_next
-        self._fields: dict[str, MeasurementField] = {}
+        self._fields: dict[str, LabeledInputField] = {}
         self._computation_complete = False
         self._build()
 
@@ -134,25 +51,13 @@ class StepMeasurements(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=20)
 
-        # Header (compact)
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 10))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Review Measurements",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color=self.COLORS["title"],
+        # Header
+        header = PageHeader(
+            content_frame,
+            title="Review Measurements",
+            subtitle="Verify the extracted measurements and make corrections if needed.",
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Verify the extracted measurements and make corrections if needed.",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(4, 0))
+        header.pack(pady=(0, 10))
 
         # Main content (two columns)
         main_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -161,9 +66,9 @@ class StepMeasurements(ctk.CTkFrame):
         # Left column - Visualization
         vis_panel = ctk.CTkFrame(
             main_frame,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
             width=self.VISUALIZATION_SIZE[0] + 20,
             height=self.VISUALIZATION_SIZE[1] + 60,
@@ -171,19 +76,14 @@ class StepMeasurements(ctk.CTkFrame):
         vis_panel.pack(side="left", padx=(0, 20))
         vis_panel.pack_propagate(False)
 
-        vis_title = ctk.CTkLabel(
-            vis_panel,
-            text="Detection Visualization",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        vis_title = SectionTitle(vis_panel, text="Detection Visualization")
         vis_title.pack(pady=(15, 10))
 
         self._vis_label = ctk.CTkLabel(
             vis_panel,
             text="No visualization available",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
             width=self.VISUALIZATION_SIZE[0],
             height=self.VISUALIZATION_SIZE[1],
         )
@@ -196,9 +96,9 @@ class StepMeasurements(ctk.CTkFrame):
         # Extracted measurements panel
         measurements_panel = ctk.CTkFrame(
             right_column,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
         measurements_panel.pack(fill="x")
@@ -206,12 +106,7 @@ class StepMeasurements(ctk.CTkFrame):
         measurements_content = ctk.CTkFrame(measurements_panel, fg_color="transparent")
         measurements_content.pack(padx=20, pady=15)
 
-        measurements_title = ctk.CTkLabel(
-            measurements_content,
-            text="Extracted Measurements",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        measurements_title = SectionTitle(measurements_content, text="Extracted Measurements")
         measurements_title.pack(anchor="w", pady=(0, 10))
 
         # All measurement fields
@@ -230,7 +125,7 @@ class StepMeasurements(ctk.CTkFrame):
         ]
 
         for field_name, label in all_measurements:
-            field = MeasurementField(
+            field = LabeledInputField(
                 measurements_content,
                 label=label,
                 unit="cm",
@@ -244,7 +139,7 @@ class StepMeasurements(ctk.CTkFrame):
             measurements_content,
             text="You can manually adjust values if needed.",
             font=ctk.CTkFont(size=11),
-            text_color=self.COLORS["info_text"],
+            text_color=ThemeColors.INFO_TEXT,
         )
         info_label.pack(anchor="w", pady=(8, 0))
 
@@ -252,10 +147,9 @@ class StepMeasurements(ctk.CTkFrame):
         button_frame = ctk.CTkFrame(right_column, fg_color="transparent")
         button_frame.pack(fill="x", pady=(10, 0))
 
-        self._configure_button = ctk.CTkButton(
+        self._configure_button = ActionButton(
             button_frame,
             text="Configure Mesh",
-            font=ctk.CTkFont(size=14, weight="bold"),
             width=180,
             height=40,
             command=self._compute_parameters,
@@ -263,12 +157,7 @@ class StepMeasurements(ctk.CTkFrame):
         self._configure_button.pack()
 
         # Status label for parameter computation
-        self._status_label = ctk.CTkLabel(
-            button_frame,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["status_blue"],
-        )
+        self._status_label = StatusLabel(button_frame, text="")
         self._status_label.pack(pady=(8, 0))
 
     def on_enter(self) -> None:
@@ -293,9 +182,8 @@ class StepMeasurements(ctk.CTkFrame):
                 converged = summary.get("converged_count", 0)
                 total = summary.get("total_measurements", 0)
                 mean_error = summary.get("mean_absolute_error", 0)
-                self._status_label.configure(
-                    text=f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm",
-                    text_color=self.COLORS["status_green"],
+                self._status_label.set_success(
+                    f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm"
                 )
         else:
             self._computation_complete = False
@@ -304,7 +192,7 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._compute_parameters,
             )
-            self._status_label.configure(text="")
+            self._status_label.clear()
 
     def _load_visualization(self) -> None:
         """Load and display the visualization image."""
@@ -363,10 +251,7 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state.measurements.is_computing_parameters = True
         self.app_state.measurements.parameters_error = None
         self._configure_button.configure(state="disabled")
-        self._status_label.configure(
-            text="Computing mesh parameters...",
-            text_color=self.COLORS["status_blue"],
-        )
+        self._status_label.set_info("Computing mesh parameters...")
         self.app_state.notify_change()
 
         thread = threading.Thread(target=self._run_parameter_computation)
@@ -401,9 +286,8 @@ class StepMeasurements(ctk.CTkFrame):
             state="normal",
             command=self._navigate_to_accuracy_review,
         )
-        self._status_label.configure(
-            text=f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm",
-            text_color=self.COLORS["status_green"],
+        self._status_label.set_success(
+            f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm"
         )
         self.app_state.notify_change()
 
@@ -418,10 +302,8 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state.measurements.parameters_error = error_message
 
         self._configure_button.configure(state="normal")
-        self._status_label.configure(
-            text=f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}",
-            text_color=self.COLORS["status_red"],
-        )
+        error_text = f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}"
+        self._status_label.set_error(error_text)
         self.app_state.notify_change()
 
     def validate(self) -> bool:

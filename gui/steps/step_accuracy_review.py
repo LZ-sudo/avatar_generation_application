@@ -9,18 +9,11 @@ import customtkinter as ctk
 from typing import Callable, Optional
 
 from ..app_state import AppState
+from ..components.ui_elements import ThemeColors, PageHeader, ActionButton
 
 
 class MeasurementRow(ctk.CTkFrame):
     """A single row in the measurement comparison table."""
-
-    COLORS = {
-        "text": "#374151",
-        "converged": "#16a34a",
-        "not_converged": "#dc2626",
-        "row_bg": "#ffffff",
-        "row_alt_bg": "#f9fafb",
-    }
 
     # Row width matches table width
     ROW_WIDTH = 455
@@ -35,7 +28,7 @@ class MeasurementRow(ctk.CTkFrame):
         converged: bool,
         is_alternate: bool = False,
     ):
-        bg_color = self.COLORS["row_alt_bg"] if is_alternate else self.COLORS["row_bg"]
+        bg_color = ThemeColors.ROW_ALT_BG if is_alternate else ThemeColors.ROW_BG
         super().__init__(parent, fg_color=bg_color, height=32, width=self.ROW_WIDTH)
         self.pack_propagate(False)
 
@@ -44,7 +37,7 @@ class MeasurementRow(ctk.CTkFrame):
             self,
             text=measurement_name,
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             width=150,
             anchor="w",
         )
@@ -55,7 +48,7 @@ class MeasurementRow(ctk.CTkFrame):
             self,
             text=f"{target:.2f}",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             width=70,
             anchor="e",
         )
@@ -66,14 +59,14 @@ class MeasurementRow(ctk.CTkFrame):
             self,
             text=f"{actual:.2f}",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             width=70,
             anchor="e",
         )
         actual_label.pack(side="left", padx=5)
 
         # Error value
-        error_color = self.COLORS["converged"] if converged else self.COLORS["not_converged"]
+        error_color = ThemeColors.STATUS_GREEN if converged else ThemeColors.STATUS_RED
         error_text = f"{error:+.3f}"
         error_label = ctk.CTkLabel(
             self,
@@ -87,7 +80,7 @@ class MeasurementRow(ctk.CTkFrame):
 
         # Status indicator
         status_text = "OK" if converged else "!"
-        status_color = self.COLORS["converged"] if converged else self.COLORS["not_converged"]
+        status_color = ThemeColors.STATUS_GREEN if converged else ThemeColors.STATUS_RED
         status_label = ctk.CTkLabel(
             self,
             text=status_text,
@@ -105,19 +98,6 @@ class StepAccuracyReview(ctk.CTkFrame):
 
     Displays the comparison between target measurements and actual mesh measurements.
     """
-
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "panel_bg": "#ffffff",
-        "panel_border": "#d1d5db",
-        "section_title": "#374151",
-        "header_bg": "#f3f4f6",
-        "header_text": "#6b7280",
-        "summary_green": "#16a34a",
-        "summary_red": "#dc2626",
-        "summary_blue": "#2563eb",
-    }
 
     # Table width: columns (150+70+70+70+40=400) + padding (~55) = 455px
     TABLE_WIDTH = 455
@@ -155,32 +135,20 @@ class StepAccuracyReview(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=20)
 
-        # Header (compact)
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 10))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Mesh Accuracy Review",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color=self.COLORS["title"],
+        # Header
+        header = PageHeader(
+            content_frame,
+            title="Mesh Accuracy Review",
+            subtitle="Review the accuracy of the generated mesh parameters before proceeding.",
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Review the accuracy of the generated mesh parameters before proceeding.",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(4, 0))
+        header.pack(pady=(0, 10))
 
         # Main content panel - centered with content-fitting width
         main_panel = ctk.CTkFrame(
             content_frame,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
         main_panel.pack(pady=10)
@@ -195,7 +163,7 @@ class StepAccuracyReview(ctk.CTkFrame):
         # Table header
         header_row = ctk.CTkFrame(
             panel_content,
-            fg_color=self.COLORS["header_bg"],
+            fg_color=ThemeColors.HEADER_BG,
             height=32,
             width=self.TABLE_WIDTH,
         )
@@ -215,7 +183,7 @@ class StepAccuracyReview(ctk.CTkFrame):
                 header_row,
                 text=text,
                 font=ctk.CTkFont(size=11, weight="bold"),
-                text_color=self.COLORS["header_text"],
+                text_color=ThemeColors.HEADER_TEXT,
                 width=width,
                 anchor=anchor,
             )
@@ -240,26 +208,22 @@ class StepAccuracyReview(ctk.CTkFrame):
         button_frame.pack_propagate(False)
 
         # Back button
-        self._back_button = ctk.CTkButton(
+        self._back_button = ActionButton(
             button_frame,
             text="Back to Measurements",
-            font=ctk.CTkFont(size=13),
-            width=160,
-            height=36,
+            command=self._on_back_click,
+            primary=False,
             fg_color="#6b7280",
             hover_color="#4b5563",
-            command=self._on_back_click,
         )
         self._back_button.pack(side="left")
 
         # Proceed button
-        self._proceed_button = ctk.CTkButton(
+        self._proceed_button = ActionButton(
             button_frame,
             text="Proceed to Configure",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            width=160,
-            height=36,
             command=self._on_proceed_click,
+            primary=True,
         )
         self._proceed_button.pack(side="right")
 
@@ -284,7 +248,7 @@ class StepAccuracyReview(ctk.CTkFrame):
                 self._rows_container,
                 text="No parameters report available. Please compute mesh parameters first.",
                 font=ctk.CTkFont(size=12),
-                text_color=self.COLORS["subtitle"],
+                text_color=ThemeColors.SUBTITLE,
             )
             no_data_label.pack(pady=20)
             return
@@ -324,7 +288,7 @@ class StepAccuracyReview(ctk.CTkFrame):
         summary_row.pack(fill="x")
 
         # Convergence status
-        conv_color = self.COLORS["summary_green"] if all_converged else self.COLORS["summary_blue"]
+        conv_color = ThemeColors.STATUS_GREEN if all_converged else ThemeColors.STATUS_BLUE
         conv_text = f"Converged: {converged_count}/{total_measurements}"
         conv_label = ctk.CTkLabel(
             summary_row,
@@ -339,12 +303,12 @@ class StepAccuracyReview(ctk.CTkFrame):
             summary_row,
             text=f"Mean Error: {mean_error:.3f} cm",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["section_title"],
+            text_color=ThemeColors.LABEL,
         )
         mae_label.pack(side="left", padx=(0, 20))
 
         # Max Error
-        max_color = self.COLORS["summary_red"] if max_error > 1.0 else self.COLORS["section_title"]
+        max_color = ThemeColors.STATUS_RED if max_error > 1.0 else ThemeColors.LABEL
         max_label = ctk.CTkLabel(
             summary_row,
             text=f"Max Error: {max_error:.3f} cm",
@@ -360,7 +324,7 @@ class StepAccuracyReview(ctk.CTkFrame):
                 self._summary_frame,
                 text=info_text,
                 font=ctk.CTkFont(size=11),
-                text_color=self.COLORS["subtitle"],
+                text_color=ThemeColors.SUBTITLE,
             )
             info_label.pack(anchor="w", pady=(8, 0))
 

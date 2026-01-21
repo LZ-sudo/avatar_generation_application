@@ -1,5 +1,5 @@
 """
-Step 3: Avatar Configuration
+Step 4: Avatar Configuration
 
 Allows the user to configure avatar generation options.
 """
@@ -9,6 +9,7 @@ from tkinter import filedialog
 from pathlib import Path
 
 from ..app_state import AppState, RigType, HairStyle
+from ..components.ui_elements import ThemeColors, PageHeader, SectionTitle
 
 
 class StepConfigure(ctk.CTkFrame):
@@ -18,14 +19,7 @@ class StepConfigure(ctk.CTkFrame):
     Provides options for rig type, hair style, and output settings.
     """
 
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "section_title": "#374151",
-        "panel_bg": "#ffffff",
-        "panel_border": "#d1d5db",
-        "warning": "#c2410c",
-    }
+    WARNING_COLOR = "#c2410c"
 
     RIG_OPTIONS = {
         "Default": RigType.DEFAULT.value,
@@ -50,24 +44,15 @@ class StepConfigure(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=30)
 
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 20))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Configure Avatar",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color=self.COLORS["title"],
+        # Header
+        header = PageHeader(
+            content_frame,
+            title="Configure Avatar",
+            subtitle="Set avatar options and output preferences.",
+            title_size=24,
+            subtitle_size=14,
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Set avatar options and output preferences.",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(8, 0))
+        header.pack(pady=(0, 20))
 
         panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         panels_frame.pack(pady=20)
@@ -82,7 +67,7 @@ class StepConfigure(ctk.CTkFrame):
             content_frame,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["warning"],
+            text_color=self.WARNING_COLOR,
         )
         self._validation_label.pack(pady=(10, 0))
 
@@ -90,31 +75,26 @@ class StepConfigure(ctk.CTkFrame):
         """Create the avatar options panel."""
         panel = ctk.CTkFrame(
             parent,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
         content.pack(padx=20, pady=20)
 
-        title = ctk.CTkLabel(
-            content,
-            text="Avatar Options",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        title = SectionTitle(content, text="Avatar Options", font_size=16)
         title.pack(anchor="w")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
         separator.pack(fill="x", pady=(10, 15))
 
         rig_label = ctk.CTkLabel(
             content,
             text="Rig Type",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         rig_label.pack(anchor="w")
 
@@ -138,7 +118,7 @@ class StepConfigure(ctk.CTkFrame):
             content,
             text="Hair Style",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         hair_label.pack(anchor="w")
 
@@ -164,31 +144,26 @@ class StepConfigure(ctk.CTkFrame):
         """Create the output options panel."""
         panel = ctk.CTkFrame(
             parent,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
         content.pack(padx=20, pady=20)
 
-        title = ctk.CTkLabel(
-            content,
-            text="Output Settings",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        title = SectionTitle(content, text="Output Settings", font_size=16)
         title.pack(anchor="w")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
         separator.pack(fill="x", pady=(10, 15))
 
         dir_label = ctk.CTkLabel(
             content,
             text="Output Directory",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         dir_label.pack(anchor="w")
 
@@ -219,7 +194,7 @@ class StepConfigure(ctk.CTkFrame):
             content,
             text="Output Filename",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         filename_label.pack(anchor="w")
 
@@ -241,7 +216,7 @@ class StepConfigure(ctk.CTkFrame):
             filename_frame,
             text=".fbx",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         extension_label.pack(side="left", padx=(5, 0))
 
@@ -249,7 +224,7 @@ class StepConfigure(ctk.CTkFrame):
             content,
             text="Export Formats",
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["subtitle"],
+            text_color=ThemeColors.SUBTITLE,
         )
         export_label.pack(anchor="w")
 

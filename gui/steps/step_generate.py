@@ -1,5 +1,5 @@
 """
-Step 4: Generate Avatar
+Step 5: Generate Avatar
 
 Handles avatar generation and displays results with preview.
 """
@@ -15,6 +15,7 @@ from PIL import Image
 from ..app_state import AppState
 from ..components.progress_display import ProgressDisplay
 from ..backend_interface import BackendInterface
+from ..components.ui_elements import ThemeColors, PageHeader, SectionTitle
 
 
 class StepGenerate(ctk.CTkFrame):
@@ -24,15 +25,7 @@ class StepGenerate(ctk.CTkFrame):
     Triggers avatar generation and displays progress and results.
     """
 
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "panel_bg": "#f3f4f6",
-        "section_title": "#374151",
-        "text": "#374151",
-        "preview_bg": "#e5e7eb",
-        "preview_text": "#6b7280",
-    }
+    PREVIEW_BG = "#e5e7eb"
 
     def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
         super().__init__(parent, fg_color="transparent")
@@ -45,24 +38,15 @@ class StepGenerate(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=30)
 
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 20))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Generate Avatar",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color=self.COLORS["title"],
+        # Header
+        header = PageHeader(
+            content_frame,
+            title="Generate Avatar",
+            subtitle="Review your settings and generate the avatar.",
+            title_size=24,
+            subtitle_size=14,
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Review your settings and generate the avatar.",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(8, 0))
+        header.pack(pady=(0, 20))
 
         self._summary_frame = self._create_summary(content_frame)
         self._summary_frame.pack(pady=20)
@@ -82,12 +66,7 @@ class StepGenerate(ctk.CTkFrame):
 
         self._preview_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
 
-        preview_title = ctk.CTkLabel(
-            self._preview_frame,
-            text="Preview",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        preview_title = SectionTitle(self._preview_frame, text="Preview", font_size=16)
         preview_title.pack(pady=(0, 10))
 
         self._preview_label = ctk.CTkLabel(
@@ -95,9 +74,9 @@ class StepGenerate(ctk.CTkFrame):
             text="Preview will appear here after generation",
             width=300,
             height=300,
-            fg_color=self.COLORS["preview_bg"],
+            fg_color=self.PREVIEW_BG,
             corner_radius=10,
-            text_color=self.COLORS["preview_text"],
+            text_color=ThemeColors.SUBTITLE,
         )
         self._preview_label.pack()
 
@@ -123,7 +102,7 @@ class StepGenerate(ctk.CTkFrame):
 
         measurements_panel = ctk.CTkFrame(
             frame,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.HEADER_BG,
             corner_radius=8,
             width=200,
         )
@@ -133,24 +112,20 @@ class StepGenerate(ctk.CTkFrame):
         measurements_content = ctk.CTkFrame(measurements_panel, fg_color="transparent")
         measurements_content.pack(padx=15, pady=15, fill="both", expand=True)
 
-        ctk.CTkLabel(
-            measurements_content,
-            text="Measurements",
-            font=ctk.CTkFont(size=14, weight="bold"),
-        ).pack(anchor="w")
+        SectionTitle(measurements_content, text="Measurements").pack(anchor="w")
 
         self._summary_measurements = ctk.CTkLabel(
             measurements_content,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             justify="left",
         )
         self._summary_measurements.pack(anchor="w", pady=(5, 0))
 
         config_panel = ctk.CTkFrame(
             frame,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.HEADER_BG,
             corner_radius=8,
             width=200,
         )
@@ -160,24 +135,20 @@ class StepGenerate(ctk.CTkFrame):
         config_content = ctk.CTkFrame(config_panel, fg_color="transparent")
         config_content.pack(padx=15, pady=15, fill="both", expand=True)
 
-        ctk.CTkLabel(
-            config_content,
-            text="Configuration",
-            font=ctk.CTkFont(size=14, weight="bold"),
-        ).pack(anchor="w")
+        SectionTitle(config_content, text="Configuration").pack(anchor="w")
 
         self._summary_config = ctk.CTkLabel(
             config_content,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             justify="left",
         )
         self._summary_config.pack(anchor="w", pady=(5, 0))
 
         output_panel = ctk.CTkFrame(
             frame,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.HEADER_BG,
             corner_radius=8,
             width=200,
         )
@@ -187,17 +158,13 @@ class StepGenerate(ctk.CTkFrame):
         output_content = ctk.CTkFrame(output_panel, fg_color="transparent")
         output_content.pack(padx=15, pady=15, fill="both", expand=True)
 
-        ctk.CTkLabel(
-            output_content,
-            text="Output",
-            font=ctk.CTkFont(size=14, weight="bold"),
-        ).pack(anchor="w")
+        SectionTitle(output_content, text="Output").pack(anchor="w")
 
         self._summary_output = ctk.CTkLabel(
             output_content,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
             justify="left",
         )
         self._summary_output.pack(anchor="w", pady=(5, 0))

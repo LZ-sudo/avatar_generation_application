@@ -13,18 +13,22 @@ import threading
 from ..app_state import AppState
 from ..backend_interface import BackendInterface
 from ..components.image_picker import ImagePicker
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    SectionTitle,
+    LabeledDropdown,
+    IconLabel,
+    ActionButton,
+    StatusLabel,
+)
 
 
 class StatusIndicator(ctk.CTkFrame):
     """A small status indicator with icon and label."""
 
-    COLORS = {
-        "valid": "#16a34a",
-        "invalid": "#dc2626",
-        "label": "#374151",
-        "bg": "#f9fafb",
-        "border": "#e5e7eb",
-    }
+    INDICATOR_BG = "#f9fafb"
+    INDICATOR_BORDER = "#e5e7eb"
 
     def __init__(
         self,
@@ -34,9 +38,9 @@ class StatusIndicator(ctk.CTkFrame):
     ):
         super().__init__(
             parent,
-            fg_color=self.COLORS["bg"],
+            fg_color=self.INDICATOR_BG,
             border_width=1,
-            border_color=self.COLORS["border"],
+            border_color=self.INDICATOR_BORDER,
             corner_radius=6,
         )
         self.label_text = label
@@ -60,7 +64,7 @@ class StatusIndicator(ctk.CTkFrame):
             content,
             text=self.label_text,
             font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["label"],
+            text_color=ThemeColors.LABEL,
         )
         self._text_label.pack(side="left", padx=(6, 0))
 
@@ -71,12 +75,12 @@ class StatusIndicator(ctk.CTkFrame):
         if self._is_valid:
             self._icon_label.configure(
                 text="\u2713",
-                text_color=self.COLORS["valid"],
+                text_color=ThemeColors.STATUS_GREEN,
             )
         else:
             self._icon_label.configure(
                 text="\u2717",
-                text_color=self.COLORS["invalid"],
+                text_color=ThemeColors.STATUS_RED,
             )
 
     def set_valid(self, is_valid: bool) -> None:
@@ -97,17 +101,7 @@ class StepImageInput(ctk.CTkFrame):
     Provides front image picker, height input, and configuration status indicators.
     """
 
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "warning": "#c2410c",
-        "panel_bg": "#ffffff",
-        "panel_border": "#d1d5db",
-        "label": "#374151",
-        "status_blue": "#2563eb",
-        "status_green": "#16a34a",
-        "status_red": "#dc2626",
-    }
+    WARNING_COLOR = "#c2410c"
 
     def __init__(
         self,
@@ -130,24 +124,14 @@ class StepImageInput(ctk.CTkFrame):
         content_frame.pack(expand=True, fill="both", padx=30, pady=30)
 
         # Header
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 20))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Image Input & Measurement Extraction",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color=self.COLORS["title"],
+        header = PageHeader(
+            content_frame,
+            title="Image Input & Measurement Extraction",
+            subtitle="Select a front view photograph and enter your height to extract body measurements.",
+            title_size=24,
+            subtitle_size=14,
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Select a front view photograph and enter your height to extract body measurements.",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(8, 0))
+        header.pack(pady=(0, 20))
 
         # Main content area (two columns)
         main_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -171,9 +155,9 @@ class StepImageInput(ctk.CTkFrame):
         # Subject's Details panel
         details_panel = ctk.CTkFrame(
             right_column,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
         details_panel.pack(fill="x", pady=(0, 10))
@@ -181,106 +165,37 @@ class StepImageInput(ctk.CTkFrame):
         details_content = ctk.CTkFrame(details_panel, fg_color="transparent")
         details_content.pack(padx=15, pady=12)
 
-        details_label = ctk.CTkLabel(
-            details_content,
-            text="Subject's Details",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["label"],
-        )
-        details_label.pack(anchor="w", pady=(0, 8))
+        details_title = SectionTitle(details_content, text="Subject's Details")
+        details_title.pack(anchor="w", pady=(0, 8))
 
         # Gender selection
-        gender_frame = ctk.CTkFrame(details_content, fg_color="transparent")
-        gender_frame.pack(anchor="w", fill="x", pady=(0, 6))
-
-        gender_label_frame = ctk.CTkFrame(gender_frame, fg_color="transparent")
-        gender_label_frame.pack(anchor="w")
-
-        gender_icon = ctk.CTkLabel(
-            gender_label_frame,
-            text="\u2642\u2640",
-            font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["label"],
-        )
-        gender_icon.pack(side="left")
-
-        gender_label = ctk.CTkLabel(
-            gender_label_frame,
-            text="Gender",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label"],
-        )
-        gender_label.pack(side="left", padx=(4, 0))
-
-        self._gender_var = ctk.StringVar(value="")
-        self._gender_dropdown = ctk.CTkOptionMenu(
-            gender_frame,
-            width=180,
-            height=28,
+        self._gender_dropdown = LabeledDropdown(
+            details_content,
+            label="Gender",
             values=["Male", "Female"],
-            variable=self._gender_var,
-            command=self._on_gender_change,
+            icon="\u2642\u2640",
+            placeholder="Select gender",
+            on_change=self._on_gender_change,
         )
-        self._gender_dropdown.set("Select gender")
-        self._gender_dropdown.pack(anchor="w", pady=(2, 0))
+        self._gender_dropdown.pack(anchor="w", fill="x", pady=(0, 6))
 
         # Race selection
-        race_frame = ctk.CTkFrame(details_content, fg_color="transparent")
-        race_frame.pack(anchor="w", fill="x", pady=(0, 6))
-
-        race_label_frame = ctk.CTkFrame(race_frame, fg_color="transparent")
-        race_label_frame.pack(anchor="w")
-
-        race_icon = ctk.CTkLabel(
-            race_label_frame,
-            text="\u263A",
-            font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["label"],
-        )
-        race_icon.pack(side="left")
-
-        race_label = ctk.CTkLabel(
-            race_label_frame,
-            text="Race",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label"],
-        )
-        race_label.pack(side="left", padx=(4, 0))
-
-        self._race_var = ctk.StringVar(value="")
-        self._race_dropdown = ctk.CTkOptionMenu(
-            race_frame,
-            width=180,
-            height=28,
+        self._race_dropdown = LabeledDropdown(
+            details_content,
+            label="Race",
             values=["Asian", "Caucasian"],
-            variable=self._race_var,
-            command=self._on_race_change,
+            icon="\u263A",
+            placeholder="Select race",
+            on_change=self._on_race_change,
         )
-        self._race_dropdown.set("Select race")
-        self._race_dropdown.pack(anchor="w", pady=(2, 0))
+        self._race_dropdown.pack(anchor="w", fill="x", pady=(0, 6))
 
         # Height input
         height_frame = ctk.CTkFrame(details_content, fg_color="transparent")
         height_frame.pack(anchor="w", fill="x")
 
-        height_label_frame = ctk.CTkFrame(height_frame, fg_color="transparent")
-        height_label_frame.pack(anchor="w")
-
-        height_icon = ctk.CTkLabel(
-            height_label_frame,
-            text="\u2195",
-            font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["label"],
-        )
-        height_icon.pack(side="left")
-
-        height_label = ctk.CTkLabel(
-            height_label_frame,
-            text="Height",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label"],
-        )
-        height_label.pack(side="left", padx=(4, 0))
+        height_label = IconLabel(height_frame, icon="\u2195", text="Height")
+        height_label.pack(anchor="w")
 
         height_input_frame = ctk.CTkFrame(height_frame, fg_color="transparent")
         height_input_frame.pack(anchor="w", pady=(2, 0))
@@ -302,16 +217,16 @@ class StepImageInput(ctk.CTkFrame):
             height_input_frame,
             text="cm",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label"],
+            text_color=ThemeColors.LABEL,
         )
         height_unit.pack(side="left", padx=(6, 0))
 
         # Configuration status panel
         status_panel = ctk.CTkFrame(
             right_column,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
         status_panel.pack(fill="x", pady=(0, 10))
@@ -319,13 +234,8 @@ class StepImageInput(ctk.CTkFrame):
         status_content = ctk.CTkFrame(status_panel, fg_color="transparent")
         status_content.pack(padx=15, pady=12)
 
-        status_label = ctk.CTkLabel(
-            status_content,
-            text="Configuration Status",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["label"],
-        )
-        status_label.pack(anchor="w", pady=(0, 8))
+        status_title = SectionTitle(status_content, text="Configuration Status")
+        status_title.pack(anchor="w", pady=(0, 8))
 
         self._camera_status = StatusIndicator(
             status_content,
@@ -346,40 +256,32 @@ class StepImageInput(ctk.CTkFrame):
             content_frame,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["warning"],
+            text_color=self.WARNING_COLOR,
         )
         self._validation_label.pack(pady=(10, 0))
 
         # Extract button
-        self._extract_button = ctk.CTkButton(
+        self._extract_button = ActionButton(
             content_frame,
             text="Extract Measurements",
-            font=ctk.CTkFont(size=14, weight="bold"),
             width=200,
             height=40,
             command=self._extract_measurements,
-            state="disabled",
         )
+        self._extract_button.configure(state="disabled")
         self._extract_button.pack(pady=(0, 0))
 
         # Status label for extraction
-        self._status_label = ctk.CTkLabel(
-            content_frame,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["status_blue"],
-        )
+        self._status_label = StatusLabel(content_frame, text="")
         self._status_label.pack(pady=(5, 0))
 
         # Restore existing state
         if self.app_state.image_input.front_image_path:
             self._front_picker.set_image(self.app_state.image_input.front_image_path)
         if self.app_state.image_input.gender:
-            self._gender_var.set(self.app_state.image_input.gender.capitalize())
-            self._gender_dropdown.set(self.app_state.image_input.gender.capitalize())
+            self._gender_dropdown.set_value(self.app_state.image_input.gender.capitalize())
         if self.app_state.image_input.race:
-            self._race_var.set(self.app_state.image_input.race.capitalize())
-            self._race_dropdown.set(self.app_state.image_input.race.capitalize())
+            self._race_dropdown.set_value(self.app_state.image_input.race.capitalize())
         if self.app_state.image_input.height_cm:
             self._height_var.set(str(self.app_state.image_input.height_cm))
 
@@ -401,7 +303,7 @@ class StepImageInput(ctk.CTkFrame):
 
     def _on_gender_change(self, value: str) -> None:
         """Handle gender selection change."""
-        if value and value != "Select gender":
+        if value:
             self.app_state.image_input.gender = value.lower()
         else:
             self.app_state.image_input.gender = None
@@ -410,7 +312,7 @@ class StepImageInput(ctk.CTkFrame):
 
     def _on_race_change(self, value: str) -> None:
         """Handle race selection change."""
-        if value and value != "Select race":
+        if value:
             self.app_state.image_input.race = value.lower()
         else:
             self.app_state.image_input.race = None
@@ -471,10 +373,7 @@ class StepImageInput(ctk.CTkFrame):
         """Start the measurement extraction process."""
         self.app_state.image_input.is_extracting = True
         self._extract_button.configure(state="disabled")
-        self._status_label.configure(
-            text="Extracting measurements...",
-            text_color=self.COLORS["status_blue"],
-        )
+        self._status_label.set_info("Extracting measurements...")
         self.app_state.notify_change()
 
         thread = threading.Thread(target=self._run_extraction)
@@ -530,10 +429,7 @@ class StepImageInput(ctk.CTkFrame):
             text="Review Measurements",
             command=self._go_to_review,
         )
-        self._status_label.configure(
-            text="Measurements extracted successfully!",
-            text_color=self.COLORS["status_green"],
-        )
+        self._status_label.set_success("Measurements extracted successfully!")
         self.app_state.notify_change()
 
     def _on_extraction_error(self, error_message: str) -> None:
@@ -542,10 +438,7 @@ class StepImageInput(ctk.CTkFrame):
         self.app_state.image_input.extraction_error = error_message
 
         self._extract_button.configure(state="normal")
-        self._status_label.configure(
-            text=f"Error: {error_message}",
-            text_color=self.COLORS["status_red"],
-        )
+        self._status_label.set_error(f"Error: {error_message}")
         self.app_state.notify_change()
 
     def _go_to_review(self) -> None:
@@ -567,10 +460,7 @@ class StepImageInput(ctk.CTkFrame):
                 command=self._go_to_review,
                 state="normal",
             )
-            self._status_label.configure(
-                text="Measurements extracted successfully!",
-                text_color=self.COLORS["status_green"],
-            )
+            self._status_label.set_success("Measurements extracted successfully!")
         else:
             self._extraction_complete = False
             self._extract_button.configure(
