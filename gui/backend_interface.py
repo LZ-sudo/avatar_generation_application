@@ -96,6 +96,22 @@ class BackendInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def compute_mesh_parameters(
+        self,
+        measurements_path: Path,
+    ) -> dict:
+        """
+        Compute mesh parameters from measurements using ML models.
+
+        Args:
+            measurements_path: Path to measurements JSON file (contains gender, race, and measurements)
+
+        Returns:
+            Dictionary containing the parameters report with target vs actual comparisons
+        """
+        pass
+
 
 class RealBackendInterface(BackendInterface):
     """
@@ -280,6 +296,72 @@ class RealBackendInterface(BackendInterface):
 
         with open(output_path) as f:
             return json.load(f)
+
+    def compute_mesh_parameters(
+        self,
+        measurements_path: Path,
+    ) -> dict:
+        """
+        Compute mesh parameters using the mesh_generation_module.
+
+        Runs compute_all_parameters.py to infer macroparameters and adjust microparameters.
+        """
+        project_root = Path(__file__).parent.parent
+        module_path = project_root / "mesh_generation_module"
+        script_path = module_path / "compute_all_parameters.py"
+
+        # Read measurements to get gender and race
+        with open(measurements_path) as f:
+            measurements_data = json.load(f)
+
+        gender = measurements_data.get("gender", "male")
+        race = measurements_data.get("race", "asian")
+
+        # Construct model weights path based on gender and race
+        weights_dir = module_path / "macroparameters_inference_weight_files"
+        weights_filename = f"macroparameters_inference_models_{gender}_{race}_tabm.pkl"
+        weights_path = weights_dir / weights_filename
+
+        if not weights_path.exists():
+            raise RuntimeError(
+                f"Model weights not found at {weights_path}. "
+                f"Expected weights for gender={gender}, race={race}."
+            )
+
+        # Output paths
+        intermediates_dir = project_root / "intermediates"
+        intermediates_dir.mkdir(parents=True, exist_ok=True)
+        output_params = intermediates_dir / "mesh_parameters.json"
+        output_report = intermediates_dir / "parameters_report.json"
+
+        cmd = [
+            "python",
+            str(script_path),
+            "--input", str(measurements_path),
+            "--models", str(weights_path),
+            "--output", str(output_params),
+            "--report", str(output_report),
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(module_path),
+            timeout=600,  # 10 minute timeout
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            raise RuntimeError(f"Parameter computation failed: {error_msg}")
+
+        if not output_report.exists():
+            raise RuntimeError("Computation completed but report file not created")
+
+        with open(output_report) as f:
+            report = json.load(f)
+
+        return report
 
 
 def get_backend() -> BackendInterface:

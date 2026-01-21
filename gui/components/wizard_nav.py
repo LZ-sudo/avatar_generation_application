@@ -23,6 +23,7 @@ class WizardNav(ctk.CTkFrame):
     STEP_LABELS = {
         WizardStep.IMAGE_INPUT: "Image Input",
         WizardStep.MEASUREMENTS: "Measurements",
+        WizardStep.ACCURACY_REVIEW: "Accuracy",
         WizardStep.CONFIGURE: "Configure",
         WizardStep.GENERATE: "Generate",
     }

@@ -11,6 +11,7 @@ from ..backend_interface import BackendInterface
 from ..components.wizard_nav import WizardNav
 from ..steps.step_image_input import StepImageInput
 from ..steps.step_measurements import StepMeasurements
+from ..steps.step_accuracy_review import StepAccuracyReview
 from ..steps.step_configure import StepConfigure
 from ..steps.step_generate import StepGenerate
 
@@ -48,7 +49,18 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.backend,
                 on_navigate_next=self._go_next,
             ),
-            WizardStep.MEASUREMENTS: StepMeasurements(self._step_container, self.app_state),
+            WizardStep.MEASUREMENTS: StepMeasurements(
+                self._step_container,
+                self.app_state,
+                self.backend,
+                on_navigate_next=self._go_next,
+            ),
+            WizardStep.ACCURACY_REVIEW: StepAccuracyReview(
+                self._step_container,
+                self.app_state,
+                on_navigate_next=self._go_next,
+                on_navigate_back=self._go_back,
+            ),
             WizardStep.CONFIGURE: StepConfigure(self._step_container, self.app_state),
             WizardStep.GENERATE: StepGenerate(self._step_container, self.app_state, self.backend),
         }
@@ -128,6 +140,8 @@ class AvatarGenerationView(ctk.CTkFrame):
         if step == WizardStep.IMAGE_INPUT:
             self.steps[step].on_enter()
         elif step == WizardStep.MEASUREMENTS:
+            self.steps[step].on_enter()
+        elif step == WizardStep.ACCURACY_REVIEW:
             self.steps[step].on_enter()
         elif step == WizardStep.GENERATE:
             self.steps[step].on_enter()

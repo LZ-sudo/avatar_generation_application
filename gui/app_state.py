@@ -20,8 +20,9 @@ class WizardStep(Enum):
     """Enum representing the wizard steps."""
     IMAGE_INPUT = 0
     MEASUREMENTS = 1
-    CONFIGURE = 2
-    GENERATE = 3
+    ACCURACY_REVIEW = 2
+    CONFIGURE = 3
+    GENERATE = 4
 
 
 class RigType(Enum):
@@ -236,6 +237,12 @@ class MeasurementsState:
     is_extracted: bool = False
     is_manually_edited: bool = False
 
+    # Mesh parameters computation state
+    is_computing_parameters: bool = False
+    parameters_computed: bool = False
+    parameters_report: Optional[dict] = None
+    parameters_error: Optional[str] = None
+
     def is_complete(self) -> bool:
         """Check if measurements are available."""
         return self.is_extracted or self.is_manually_edited
@@ -260,6 +267,10 @@ class MeasurementsState:
         """Get the intermediates directory path."""
         project_root = Path(__file__).parent.parent
         return project_root / "intermediates"
+
+    def get_measurements_path(self) -> Path:
+        """Get the measurements.json file path."""
+        return self.get_intermediates_dir() / "measurements.json"
 
     def ensure_intermediates_dir_exists(self) -> None:
         """Create the intermediates directory if it doesn't exist."""
@@ -337,6 +348,8 @@ class AppState:
             return self.image_input.is_complete()
         elif self.current_step == WizardStep.MEASUREMENTS:
             return self.measurements.is_complete()
+        elif self.current_step == WizardStep.ACCURACY_REVIEW:
+            return self.measurements.parameters_computed
         elif self.current_step == WizardStep.CONFIGURE:
             return self.configure.is_complete()
         elif self.current_step == WizardStep.GENERATE:

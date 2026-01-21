@@ -8,8 +8,10 @@ import customtkinter as ctk
 from typing import Callable, Optional
 from pathlib import Path
 from PIL import Image
+import threading
 
 from ..app_state import AppState
+from ..backend_interface import BackendInterface
 
 
 class MeasurementField(ctk.CTkFrame):
@@ -105,29 +107,41 @@ class StepMeasurements(ctk.CTkFrame):
         "info_icon": "#2563eb",
         "info_text": "#6b7280",
         "section_title": "#374151",
+        "status_blue": "#2563eb",
+        "status_green": "#16a34a",
+        "status_red": "#dc2626",
     }
 
     VISUALIZATION_SIZE = (350, 450)
 
-    def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        app_state: AppState,
+        backend: BackendInterface,
+        on_navigate_next: Callable[[], None] = None,
+    ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
+        self.backend = backend
+        self.on_navigate_next = on_navigate_next
         self._fields: dict[str, MeasurementField] = {}
+        self._computation_complete = False
         self._build()
 
     def _build(self) -> None:
         """Build the step content."""
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.pack(expand=True, fill="both", padx=30, pady=30)
+        content_frame.pack(expand=True, fill="both", padx=30, pady=20)
 
-        # Header
+        # Header (compact)
         header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 20))
+        header_frame.pack(pady=(0, 10))
 
         title_label = ctk.CTkLabel(
             header_frame,
             text="Review Measurements",
-            font=ctk.CTkFont(size=24, weight="bold"),
+            font=ctk.CTkFont(size=20, weight="bold"),
             text_color=self.COLORS["title"],
         )
         title_label.pack()
@@ -135,10 +149,10 @@ class StepMeasurements(ctk.CTkFrame):
         subtitle_label = ctk.CTkLabel(
             header_frame,
             text="Verify the extracted measurements and make corrections if needed.",
-            font=ctk.CTkFont(size=14),
+            font=ctk.CTkFont(size=12),
             text_color=self.COLORS["subtitle"],
         )
-        subtitle_label.pack(pady=(8, 0))
+        subtitle_label.pack(pady=(4, 0))
 
         # Main content (two columns)
         main_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -225,31 +239,72 @@ class StepMeasurements(ctk.CTkFrame):
             field.pack(anchor="w", pady=3)
             self._fields[field_name] = field
 
-        # Info frame
-        info_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        info_frame.pack(pady=(20, 0))
-
-        info_icon = ctk.CTkLabel(
-            info_frame,
-            text="i",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["info_icon"],
-            width=20,
-        )
-        info_icon.pack(side="left")
-
-        info_text = ctk.CTkLabel(
-            info_frame,
-            text="Measurements were automatically extracted. You can manually adjust values if needed.",
-            font=ctk.CTkFont(size=12),
+        # Info text below measurements
+        info_label = ctk.CTkLabel(
+            measurements_content,
+            text="You can manually adjust values if needed.",
+            font=ctk.CTkFont(size=11),
             text_color=self.COLORS["info_text"],
         )
-        info_text.pack(side="left", padx=(8, 0))
+        info_label.pack(anchor="w", pady=(8, 0))
+
+        # Configure Mesh button (inside right column, below measurements panel)
+        button_frame = ctk.CTkFrame(right_column, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(10, 0))
+
+        self._configure_button = ctk.CTkButton(
+            button_frame,
+            text="Configure Mesh",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            width=180,
+            height=40,
+            command=self._compute_parameters,
+        )
+        self._configure_button.pack()
+
+        # Status label for parameter computation
+        self._status_label = ctk.CTkLabel(
+            button_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=self.COLORS["status_blue"],
+        )
+        self._status_label.pack(pady=(8, 0))
 
     def on_enter(self) -> None:
         """Called when entering this step."""
         self._populate_fields()
         self._load_visualization()
+        self._update_button_state()
+
+    def _update_button_state(self) -> None:
+        """Update button state based on computation status."""
+        if self.app_state.measurements.parameters_computed:
+            self._computation_complete = True
+            self._configure_button.configure(
+                text="Review Accuracy",
+                state="normal",
+                command=self._navigate_to_accuracy_review,
+            )
+            # Show previous result summary if available
+            report = self.app_state.measurements.parameters_report
+            if report:
+                summary = report.get("summary", {})
+                converged = summary.get("converged_count", 0)
+                total = summary.get("total_measurements", 0)
+                mean_error = summary.get("mean_absolute_error", 0)
+                self._status_label.configure(
+                    text=f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm",
+                    text_color=self.COLORS["status_green"],
+                )
+        else:
+            self._computation_complete = False
+            self._configure_button.configure(
+                text="Configure Mesh",
+                state="normal",
+                command=self._compute_parameters,
+            )
+            self._status_label.configure(text="")
 
     def _load_visualization(self) -> None:
         """Load and display the visualization image."""
@@ -301,6 +356,72 @@ class StepMeasurements(ctk.CTkFrame):
         """Handle field value change."""
         setattr(self.app_state.measurements, field_name, value)
         self.app_state.measurements.is_manually_edited = True
+        self.app_state.notify_change()
+
+    def _compute_parameters(self) -> None:
+        """Start the mesh parameter computation process."""
+        self.app_state.measurements.is_computing_parameters = True
+        self.app_state.measurements.parameters_error = None
+        self._configure_button.configure(state="disabled")
+        self._status_label.configure(
+            text="Computing mesh parameters...",
+            text_color=self.COLORS["status_blue"],
+        )
+        self.app_state.notify_change()
+
+        thread = threading.Thread(target=self._run_parameter_computation)
+        thread.start()
+
+    def _run_parameter_computation(self) -> None:
+        """Run parameter computation in background thread."""
+        try:
+            measurements_path = self.app_state.measurements.get_measurements_path()
+            result = self.backend.compute_mesh_parameters(measurements_path)
+            self.after(0, lambda: self._on_computation_complete(result))
+        except Exception as e:
+            self.after(0, lambda: self._on_computation_error(str(e)))
+
+    def _on_computation_complete(self, result: dict) -> None:
+        """Handle computation completion on main thread."""
+        self.app_state.measurements.is_computing_parameters = False
+        self.app_state.measurements.parameters_computed = True
+        self.app_state.measurements.parameters_report = result
+        self.app_state.measurements.parameters_error = None
+        self._computation_complete = True
+
+        # Show summary from report
+        summary = result.get("summary", {})
+        converged = summary.get("converged_count", 0)
+        total = summary.get("total_measurements", 0)
+        mean_error = summary.get("mean_absolute_error", 0)
+
+        # Change button to "Review Accuracy" for navigation
+        self._configure_button.configure(
+            text="Review Accuracy",
+            state="normal",
+            command=self._navigate_to_accuracy_review,
+        )
+        self._status_label.configure(
+            text=f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm",
+            text_color=self.COLORS["status_green"],
+        )
+        self.app_state.notify_change()
+
+    def _navigate_to_accuracy_review(self) -> None:
+        """Navigate to the Accuracy Review step."""
+        if self.on_navigate_next:
+            self.on_navigate_next()
+
+    def _on_computation_error(self, error_message: str) -> None:
+        """Handle computation error on main thread."""
+        self.app_state.measurements.is_computing_parameters = False
+        self.app_state.measurements.parameters_error = error_message
+
+        self._configure_button.configure(state="normal")
+        self._status_label.configure(
+            text=f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}",
+            text_color=self.COLORS["status_red"],
+        )
         self.app_state.notify_change()
 
     def validate(self) -> bool:
