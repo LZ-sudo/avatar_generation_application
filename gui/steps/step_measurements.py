@@ -250,7 +250,7 @@ class StepMeasurements(ctk.CTkFrame):
         """Start the mesh parameter computation process."""
         self.app_state.measurements.is_computing_parameters = True
         self.app_state.measurements.parameters_error = None
-        self._configure_button.configure(state="disabled")
+        self._configure_button.start_processing("Configuring Mesh...")
         self._status_label.set_info("Computing mesh parameters...")
         self.app_state.notify_change()
 
@@ -281,11 +281,7 @@ class StepMeasurements(ctk.CTkFrame):
         mean_error = summary.get("mean_absolute_error", 0)
 
         # Change button to "Review Accuracy" for navigation
-        self._configure_button.configure(
-            text="Review Accuracy",
-            state="normal",
-            command=self._navigate_to_accuracy_review,
-        )
+        self._configure_button.stop_processing("Review Accuracy", self._navigate_to_accuracy_review)
         self._status_label.set_success(
             f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm"
         )
@@ -301,7 +297,7 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state.measurements.is_computing_parameters = False
         self.app_state.measurements.parameters_error = error_message
 
-        self._configure_button.configure(state="normal")
+        self._configure_button.stop_processing()
         error_text = f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}"
         self._status_label.set_error(error_text)
         self.app_state.notify_change()

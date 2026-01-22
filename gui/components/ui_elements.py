@@ -31,10 +31,14 @@ class ThemeColors:
     STATUS_GREEN = "#16a34a"
     STATUS_RED = "#dc2626"
     STATUS_ORANGE = "#ea580c"
+    WARNING = "#c2410c"
 
     # Row colors (for tables)
     ROW_BG = "#ffffff"
     ROW_ALT_BG = "#f9fafb"
+
+    # Preview/placeholder colors
+    PREVIEW_BG = "#e5e7eb"
 
     # Icon colors
     INFO_ICON = "#2563eb"
@@ -55,8 +59,10 @@ class ThemeColors:
             "status_green": cls.STATUS_GREEN,
             "status_red": cls.STATUS_RED,
             "status_orange": cls.STATUS_ORANGE,
+            "warning": cls.WARNING,
             "row_bg": cls.ROW_BG,
             "row_alt_bg": cls.ROW_ALT_BG,
+            "preview_bg": cls.PREVIEW_BG,
             "info_icon": cls.INFO_ICON,
             "section_title": cls.LABEL,
             "converged": cls.STATUS_GREEN,
@@ -412,9 +418,10 @@ class StatusBadge(ctk.CTkFrame):
 
 class ActionButton(ctk.CTkButton):
     """
-    Styled action button with consistent sizing.
+    Styled action button with consistent sizing and processing state support.
 
     Primary buttons have bold text, secondary buttons have normal weight.
+    Supports start_processing/stop_processing for async operations.
     """
 
     def __init__(
@@ -441,6 +448,35 @@ class ActionButton(ctk.CTkButton):
             fg_color=fg_color,
             hover_color=hover_color,
         )
+
+        self._original_text = text
+        self._original_command = command
+
+    def start_processing(self, processing_text: str) -> None:
+        """
+        Start processing state - disable button and show processing text.
+
+        Args:
+            processing_text: Text to display while processing (e.g., "Extracting...")
+        """
+        self.configure(state="disabled", text=processing_text)
+
+    def stop_processing(self, new_text: Optional[str] = None, new_command: Optional[Callable[[], None]] = None) -> None:
+        """
+        Stop processing state - enable button and update text.
+
+        Args:
+            new_text: New button text. If None, restores original text.
+            new_command: New command. If None, keeps current command.
+        """
+        text = new_text if new_text is not None else self._original_text
+        self.configure(state="normal", text=text)
+        if new_command is not None:
+            self.configure(command=new_command)
+
+    def reset(self) -> None:
+        """Reset button to original state."""
+        self.configure(state="normal", text=self._original_text, command=self._original_command)
 
 
 class SectionTitle(ctk.CTkLabel):

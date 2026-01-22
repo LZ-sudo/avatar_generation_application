@@ -379,7 +379,7 @@ class CameraCalibrationView(ctk.CTkFrame):
         self.app_state.camera_calibration.is_calibrating = True
         self.app_state.camera_calibration.reset_results()
 
-        self._calibrate_button.configure(state="disabled", text="Calibrating...")
+        self._calibrate_button.start_processing("Calibrating...")
         self._results_status_label.configure(
             text="Calibrating...",
             text_color=ThemeColors.STATUS_BLUE,
@@ -424,7 +424,7 @@ class CameraCalibrationView(ctk.CTkFrame):
         state = self.app_state.camera_calibration
         state.is_calibrating = False
 
-        self._calibrate_button.configure(state="normal", text="Calibrate Camera")
+        self._calibrate_button.stop_processing()
 
         if state.calibration_success:
             self._results_status_label.configure(

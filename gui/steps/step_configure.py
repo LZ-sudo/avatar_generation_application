@@ -19,8 +19,6 @@ class StepConfigure(ctk.CTkFrame):
     Provides options for rig type, hair style, and output settings.
     """
 
-    WARNING_COLOR = "#c2410c"
-
     RIG_OPTIONS = {
         "Default": RigType.DEFAULT.value,
         "Default (No Toes)": RigType.DEFAULT_NO_TOES.value,
@@ -67,7 +65,7 @@ class StepConfigure(ctk.CTkFrame):
             content_frame,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.WARNING_COLOR,
+            text_color=ThemeColors.WARNING,
         )
         self._validation_label.pack(pady=(10, 0))
 

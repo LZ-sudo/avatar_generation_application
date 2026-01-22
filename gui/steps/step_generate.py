@@ -25,8 +25,6 @@ class StepGenerate(ctk.CTkFrame):
     Triggers avatar generation and displays progress and results.
     """
 
-    PREVIEW_BG = "#e5e7eb"
-
     def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
@@ -74,7 +72,7 @@ class StepGenerate(ctk.CTkFrame):
             text="Preview will appear here after generation",
             width=300,
             height=300,
-            fg_color=self.PREVIEW_BG,
+            fg_color=ThemeColors.PREVIEW_BG,
             corner_radius=10,
             text_color=ThemeColors.SUBTITLE,
         )

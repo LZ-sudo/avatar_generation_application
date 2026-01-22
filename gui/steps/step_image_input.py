@@ -27,9 +27,6 @@ from ..components.ui_elements import (
 class StatusIndicator(ctk.CTkFrame):
     """A small status indicator with icon and label."""
 
-    INDICATOR_BG = "#f9fafb"
-    INDICATOR_BORDER = "#e5e7eb"
-
     def __init__(
         self,
         parent: ctk.CTkFrame,
@@ -38,9 +35,9 @@ class StatusIndicator(ctk.CTkFrame):
     ):
         super().__init__(
             parent,
-            fg_color=self.INDICATOR_BG,
+            fg_color=ThemeColors.ROW_ALT_BG,
             border_width=1,
-            border_color=self.INDICATOR_BORDER,
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=6,
         )
         self.label_text = label
@@ -100,8 +97,6 @@ class StepImageInput(ctk.CTkFrame):
 
     Provides front image picker, height input, and configuration status indicators.
     """
-
-    WARNING_COLOR = "#c2410c"
 
     def __init__(
         self,
@@ -256,7 +251,7 @@ class StepImageInput(ctk.CTkFrame):
             content_frame,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color=self.WARNING_COLOR,
+            text_color=ThemeColors.WARNING,
         )
         self._validation_label.pack(pady=(10, 0))
 
@@ -372,7 +367,7 @@ class StepImageInput(ctk.CTkFrame):
     def _extract_measurements(self) -> None:
         """Start the measurement extraction process."""
         self.app_state.image_input.is_extracting = True
-        self._extract_button.configure(state="disabled")
+        self._extract_button.start_processing("Extracting Measurements...")
         self._status_label.set_info("Extracting measurements...")
         self.app_state.notify_change()
 
@@ -424,11 +419,7 @@ class StepImageInput(ctk.CTkFrame):
         self._extraction_complete = True
 
         # Change button to "Review Measurements" mode
-        self._extract_button.configure(
-            state="normal",
-            text="Review Measurements",
-            command=self._go_to_review,
-        )
+        self._extract_button.stop_processing("Review Measurements", self._go_to_review)
         self._status_label.set_success("Measurements extracted successfully!")
         self.app_state.notify_change()
 
@@ -437,7 +428,7 @@ class StepImageInput(ctk.CTkFrame):
         self.app_state.image_input.is_extracting = False
         self.app_state.image_input.extraction_error = error_message
 
-        self._extract_button.configure(state="normal")
+        self._extract_button.stop_processing()
         self._status_label.set_error(f"Error: {error_message}")
         self.app_state.notify_change()
 
