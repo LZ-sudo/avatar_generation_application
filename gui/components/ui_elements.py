@@ -30,6 +30,7 @@ class ThemeColors:
     STATUS_BLUE = "#2563eb"
     STATUS_GREEN = "#16a34a"
     STATUS_RED = "#dc2626"
+    STATUS_ORANGE = "#ea580c"
 
     # Row colors (for tables)
     ROW_BG = "#ffffff"
@@ -53,6 +54,7 @@ class ThemeColors:
             "status_blue": cls.STATUS_BLUE,
             "status_green": cls.STATUS_GREEN,
             "status_red": cls.STATUS_RED,
+            "status_orange": cls.STATUS_ORANGE,
             "row_bg": cls.ROW_BG,
             "row_alt_bg": cls.ROW_ALT_BG,
             "info_icon": cls.INFO_ICON,

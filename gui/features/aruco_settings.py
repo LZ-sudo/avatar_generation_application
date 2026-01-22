@@ -10,6 +10,13 @@ from pathlib import Path
 from PIL import Image
 
 from ..app_state import AppState
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    SectionTitle,
+    ActionButton,
+    StatusLabel,
+)
 
 
 class ArucoSettingsView(ctk.CTkFrame):
@@ -18,19 +25,6 @@ class ArucoSettingsView(ctk.CTkFrame):
 
     Allows users to configure ArUco marker positions and size for measurement calibration.
     """
-
-    COLORS = {
-        "title": "#1f2937",
-        "subtitle": "#6b7280",
-        "section_title": "#374151",
-        "panel_bg": "#ffffff",
-        "panel_border": "#d1d5db",
-        "status_success": "#16a34a",
-        "status_error": "#dc2626",
-        "text": "#374151",
-        "text_secondary": "#6b7280",
-        "label_text": "#4b5563",
-    }
 
     GUIDE_IMAGE_SIZE = (466, 400)
 
@@ -46,24 +40,14 @@ class ArucoSettingsView(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
         content_frame.pack(expand=True, fill="both", padx=30, pady=30)
 
-        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        header_frame.pack(pady=(0, 20))
-
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="ArUco Marker Settings",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color=self.COLORS["title"],
+        header = PageHeader(
+            content_frame,
+            title="ArUco Marker Settings",
+            subtitle="Configure the positions and size of ArUco markers on your backdrop.",
+            title_size=24,
+            subtitle_size=14,
         )
-        title_label.pack()
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Configure the positions and size of ArUco markers on your backdrop.",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["subtitle"],
-        )
-        subtitle_label.pack(pady=(8, 0))
+        header.pack(pady=(0, 20))
 
         panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         panels_frame.pack(fill="both", expand=True)
@@ -84,24 +68,19 @@ class ArucoSettingsView(ctk.CTkFrame):
         """Create the ArUco guide image panel."""
         panel = ctk.CTkFrame(
             parent,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=20, pady=15)
 
-        title = ctk.CTkLabel(
-            content,
-            text="Marker Positioning Guide",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        title = SectionTitle(content, text="Marker Positioning Guide", font_size=16)
         title.pack(anchor="w")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
         separator.pack(fill="x", pady=(10, 12))
 
         image_frame = ctk.CTkFrame(content, fg_color="transparent")
@@ -129,24 +108,19 @@ class ArucoSettingsView(ctk.CTkFrame):
         """Create the current settings display panel."""
         panel = ctk.CTkFrame(
             parent,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=20, pady=15)
 
-        title = ctk.CTkLabel(
-            content,
-            text="Current Settings",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        title = SectionTitle(content, text="Current Settings", font_size=16)
         title.pack(anchor="w")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
         separator.pack(fill="x", pady=(10, 12))
 
         settings_frame = ctk.CTkFrame(content, fg_color="transparent")
@@ -156,7 +130,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="Marker Size: -- cm",
             font=ctk.CTkFont(size=14),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
         )
         self._current_marker_size_label.pack(anchor="w", pady=(0, 8))
 
@@ -164,7 +138,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="Marker Positions (cm):",
             font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=self.COLORS["text"],
+            text_color=ThemeColors.LABEL,
         )
         positions_label.pack(anchor="w", pady=(4, 4))
 
@@ -172,7 +146,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="  Top Left:       X: --    Y: --",
             font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         self._current_top_left_label.pack(anchor="w", pady=2)
 
@@ -180,7 +154,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="  Top Right:      X: --    Y: --",
             font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         self._current_top_right_label.pack(anchor="w", pady=2)
 
@@ -188,7 +162,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="  Bottom Left:    X: --    Y: --",
             font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         self._current_bottom_left_label.pack(anchor="w", pady=2)
 
@@ -196,16 +170,11 @@ class ArucoSettingsView(ctk.CTkFrame):
             settings_frame,
             text="  Bottom Right:   X: --    Y: --",
             font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         self._current_bottom_right_label.pack(anchor="w", pady=2)
 
-        self._status_label = ctk.CTkLabel(
-            settings_frame,
-            text="",
-            font=ctk.CTkFont(size=13),
-            text_color=self.COLORS["text_secondary"],
-        )
+        self._status_label = StatusLabel(settings_frame, text="")
         self._status_label.pack(anchor="w", pady=(8, 0))
 
         return panel
@@ -214,24 +183,19 @@ class ArucoSettingsView(ctk.CTkFrame):
         """Create the update settings input panel."""
         panel = ctk.CTkFrame(
             parent,
-            fg_color=self.COLORS["panel_bg"],
+            fg_color=ThemeColors.PANEL_BG,
             border_width=1,
-            border_color=self.COLORS["panel_border"],
+            border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=20, pady=15)
 
-        title = ctk.CTkLabel(
-            content,
-            text="Update Settings",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=self.COLORS["section_title"],
-        )
+        title = SectionTitle(content, text="Update Settings", font_size=16)
         title.pack(anchor="w")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=self.COLORS["panel_border"])
+        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
         separator.pack(fill="x", pady=(10, 12))
 
         fields_frame = ctk.CTkFrame(content, fg_color="transparent")
@@ -244,7 +208,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             marker_size_frame,
             text="Marker Size (cm):",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label_text"],
+            text_color=ThemeColors.LABEL,
             width=120,
             anchor="w",
         )
@@ -262,7 +226,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             fields_frame,
             text="Marker Positions (cm):",
             font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=self.COLORS["label_text"],
+            text_color=ThemeColors.LABEL,
         )
         positions_title.pack(anchor="w", pady=(5, 5))
 
@@ -283,12 +247,10 @@ class ArucoSettingsView(ctk.CTkFrame):
             bottom_right_row, "Bottom Right:"
         )
 
-        self._update_button = ctk.CTkButton(
+        self._update_button = ActionButton(
             bottom_right_row,
             text="Update Configuration",
             command=self._update_configuration,
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
             width=160,
             height=28,
         )
@@ -313,7 +275,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             row_frame,
             text=label_text,
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["label_text"],
+            text_color=ThemeColors.LABEL,
             width=90,
             anchor="w",
         )
@@ -323,7 +285,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             row_frame,
             text="X:",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         x_label.pack(side="left", padx=(5, 2))
 
@@ -339,7 +301,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             row_frame,
             text="Y:",
             font=ctk.CTkFont(size=12),
-            text_color=self.COLORS["text_secondary"],
+            text_color=ThemeColors.SUBTITLE,
         )
         y_label.pack(side="left", padx=(15, 2))
 
@@ -359,17 +321,11 @@ class ArucoSettingsView(ctk.CTkFrame):
         if state.load_from_file():
             self._update_current_settings_display()
             self._populate_input_fields()
-            self._status_label.configure(
-                text="Loaded from: marker_details.json",
-                text_color=self.COLORS["text_secondary"],
-            )
+            self._status_label.set_info("Loaded from: marker_details.json")
         else:
             self._update_current_settings_display()
             self._populate_input_fields()
-            self._status_label.configure(
-                text="Using default settings (no configuration file found)",
-                text_color=self.COLORS["text_secondary"],
-            )
+            self._status_label.set_info("Using default settings (no configuration file found)")
 
     def _update_current_settings_display(self) -> None:
         """Update the current settings display labels."""
@@ -420,20 +376,11 @@ class ArucoSettingsView(ctk.CTkFrame):
             state.bottom_right.x = float(self._bottom_right_x_var.get())
             state.bottom_right.y = float(self._bottom_right_y_var.get())
         except ValueError:
-            self._status_label.configure(
-                text="Error: Please enter valid numbers",
-                text_color=self.COLORS["status_error"],
-            )
+            self._status_label.set_error("Error: Please enter valid numbers")
             return
 
         if state.save_to_file():
             self._update_current_settings_display()
-            self._status_label.configure(
-                text="Configuration updated successfully",
-                text_color=self.COLORS["status_success"],
-            )
+            self._status_label.set_success("Configuration updated successfully")
         else:
-            self._status_label.configure(
-                text="Error: Failed to save configuration",
-                text_color=self.COLORS["status_error"],
-            )
+            self._status_label.set_error("Error: Failed to save configuration")
