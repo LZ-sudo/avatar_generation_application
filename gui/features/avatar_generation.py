@@ -13,6 +13,7 @@ from ..steps.step_image_input import StepImageInput
 from ..steps.step_measurements import StepMeasurements
 from ..steps.step_accuracy_review import StepAccuracyReview
 from ..steps.step_configure import StepConfigure
+from ..steps.step_output_settings import StepOutputSettings
 from ..steps.step_generate import StepGenerate
 
 
@@ -62,6 +63,11 @@ class AvatarGenerationView(ctk.CTkFrame):
                 on_navigate_back=self._go_back,
             ),
             WizardStep.CONFIGURE: StepConfigure(self._step_container, self.app_state),
+            WizardStep.OUTPUT_SETTINGS: StepOutputSettings(
+                self._step_container,
+                self.app_state,
+                on_generate=self._start_generation,
+            ),
             WizardStep.GENERATE: StepGenerate(self._step_container, self.app_state, self.backend),
         }
 
@@ -121,10 +127,8 @@ class AvatarGenerationView(ctk.CTkFrame):
 
         self._back_button.configure(state=back_state)
 
-        if self.app_state.current_step == WizardStep.CONFIGURE:
-            self._next_button.configure(text="Generate", state=next_state)
-            self._next_button.pack(side="right")
-        elif self.app_state.current_step == WizardStep.GENERATE:
+        # Hide Next button on OUTPUT_SETTINGS and GENERATE steps
+        if self.app_state.current_step in (WizardStep.OUTPUT_SETTINGS, WizardStep.GENERATE):
             self._next_button.pack_forget()
         else:
             self._next_button.configure(text="Next", state=next_state)
@@ -153,6 +157,14 @@ class AvatarGenerationView(ctk.CTkFrame):
 
     def _go_back(self) -> None:
         """Navigate to the previous step."""
+        # Reset generation state when navigating away from GENERATE step
+        if self.app_state.current_step == WizardStep.GENERATE:
+            self.app_state.generate.is_generating = False
+            self.app_state.generate.progress = 0.0
+            self.app_state.generate.status_message = ""
+            self.app_state.generate.error_message = None
+            # Don't reset output paths and preview images - user might want to see them
+
         if self.app_state.go_back():
             self._show_step(self.app_state.current_step)
 
@@ -160,3 +172,8 @@ class AvatarGenerationView(ctk.CTkFrame):
         """Handle direct step navigation."""
         if self.app_state.go_to_step(step):
             self._show_step(step)
+
+    def _start_generation(self) -> None:
+        """Start generation by navigating to GENERATE step."""
+        if self.app_state.go_next():
+            self._show_step(self.app_state.current_step)

@@ -225,17 +225,151 @@ class RealBackendInterface(BackendInterface):
         """
         Generate avatar using the mesh_generation_module.
 
-        TODO: Implement when mesh generation module is ready.
+        Runs generate_human.py in Blender with the specified configuration.
         """
-        raise NotImplementedError("Avatar generation not yet implemented.")
+        project_root = Path(__file__).parent.parent
+        module_path = project_root / "mesh_generation_module"
+
+        # Get mesh_parameters.json path (created by compute_all_parameters.py)
+        intermediates_dir = project_root / "intermediates"
+        mesh_parameters_path = intermediates_dir / "mesh_parameters.json"
+
+        if not mesh_parameters_path.exists():
+            raise RuntimeError(
+                f"Mesh parameters file not found at {mesh_parameters_path}. "
+                "Please complete the accuracy review step first."
+            )
+
+        # Update mesh_parameters.json with output configuration
+        with open(mesh_parameters_path) as f:
+            mesh_params_data = json.load(f)
+
+        # Add output section to config
+        output_filename = config["output_filename"] + ".fbx"
+        mesh_params_data["output"] = {
+            "directory": config["output_directory"],
+            "filename": output_filename
+        }
+
+        # Save updated mesh parameters
+        with open(mesh_parameters_path, "w") as f:
+            json.dump(mesh_params_data, f, indent=2)
+
+        # Get output directory
+        output_dir = Path(config["output_directory"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if progress_callback:
+            progress_callback(0.1, "Starting Blender...")
+
+        # Build command using run_blender.py wrapper
+        run_blender_script = module_path / "run_blender.py"
+
+        cmd = [
+            "python",
+            str(run_blender_script),
+            "--script", "generate_human.py",
+            "--",
+            "--config", str(mesh_parameters_path),
+            "--rig-type", config["rig_type"],
+            "--instrumented-arm", config["instrumented_arm"],
+            "--output-dir", str(output_dir),
+        ]
+
+        # Add optional flags
+        if config.get("fk_ik_hybrid"):
+            cmd.append("--fk-ik-hybrid")
+
+        if config.get("t_pose"):
+            cmd.append("--t-pose")
+
+        # Add hair asset if specified
+        if config.get("hair_asset"):
+            cmd.extend(["--hair", config["hair_asset"]])
+
+        if progress_callback:
+            progress_callback(0.2, "Running Blender script...")
+
+        # Run Blender via run_blender.py
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(module_path),
+            timeout=600,  # 10 minute timeout
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            raise RuntimeError(f"Avatar generation failed: {error_msg}")
+
+        if progress_callback:
+            progress_callback(0.9, "Finalizing...")
+
+        # Find output files
+        output_filename = config["output_filename"]
+        fbx_path = None
+        obj_path = None
+
+        if config.get("export_fbx", True):
+            fbx_path = output_dir / f"{output_filename}.fbx"
+            if not fbx_path.exists():
+                raise RuntimeError(f"Expected FBX output not found at {fbx_path}")
+
+        if config.get("export_obj", False):
+            obj_path = output_dir / f"{output_filename}.obj"
+            if not obj_path.exists():
+                obj_path = None  # Optional, don't fail if not found
+
+        # Clean up intermediates directory after successful export
+        if progress_callback:
+            progress_callback(0.95, "Cleaning up temporary files...")
+
+        try:
+            import shutil
+            if intermediates_dir.exists():
+                shutil.rmtree(intermediates_dir)
+        except Exception as e:
+            # Don't fail if cleanup fails
+            print(f"Warning: Could not clean up intermediates directory: {e}")
+
+        if progress_callback:
+            progress_callback(1.0, "Complete!")
+
+        return {
+            "fbx_path": str(fbx_path) if fbx_path else None,
+            "obj_path": str(obj_path) if obj_path else None,
+            "preview_images": [],
+        }
 
     def open_in_blender(self, file_path: Path) -> None:
         """
-        Open file in Blender.
+        Open file in Blender GUI.
 
-        TODO: Implement using run_blender.py functionality.
+        Opens the specified file in Blender. Assumes Blender is in PATH or BLENDER_PATH is set.
         """
-        raise NotImplementedError("Blender integration not yet implemented.")
+        import os
+        import shutil
+
+        # Try to find Blender executable
+        blender_exe = None
+
+        # Check BLENDER_PATH environment variable
+        blender_env = os.environ.get("BLENDER_PATH")
+        if blender_env and Path(blender_env).exists():
+            blender_exe = blender_env
+        else:
+            # Try to find in PATH
+            blender_exe = shutil.which("blender")
+
+        if not blender_exe:
+            raise RuntimeError(
+                "Blender executable not found. Please install Blender and ensure it's in PATH, "
+                "or set BLENDER_PATH environment variable."
+            )
+
+        # Open file in Blender GUI (non-blocking)
+        subprocess.Popen([blender_exe, str(file_path)])
 
     def calibrate_camera(
         self,

@@ -22,7 +22,8 @@ class WizardStep(Enum):
     MEASUREMENTS = 1
     ACCURACY_REVIEW = 2
     CONFIGURE = 3
-    GENERATE = 4
+    OUTPUT_SETTINGS = 4
+    GENERATE = 5
 
 
 class RigType(Enum):
@@ -33,12 +34,18 @@ class RigType(Enum):
 
 
 class HairStyle(Enum):
-    """Available hair styles for avatar generation."""
+    """Available hair styles for avatar generation (legacy - will be replaced by hair assets)."""
     NONE = "none"
     SHORT = "short"
     MEDIUM = "medium"
     LONG = "long"
     CUSTOM = "custom"
+
+
+class InstrumentedArm(Enum):
+    """Which arm has IMU sensors attached."""
+    LEFT = "left"
+    RIGHT = "right"
 
 
 @dataclass
@@ -279,23 +286,34 @@ class MeasurementsState:
 
 @dataclass
 class ConfigureState:
-    """State for Step 3: Configuration."""
-    rig_type: RigType = RigType.DEFAULT
-    hair_style: HairStyle = HairStyle.NONE
-    hair_color: str = "#3d2314"
+    """State for Step 4: Avatar Configuration."""
+    rig_type: RigType = RigType.DEFAULT_NO_TOES
+    fk_ik_hybrid: bool = False
+    instrumented_arm: InstrumentedArm = InstrumentedArm.LEFT
+    hair_asset: Optional[str] = None  # Name of hair asset from mpfb_hair_assets folder
+    t_pose: bool = True
+
+    def is_complete(self) -> bool:
+        """Check if configuration is valid."""
+        return True  # All fields have defaults
+
+
+@dataclass
+class OutputSettingsState:
+    """State for Step 5: Output Settings."""
     output_directory: Optional[Path] = None
     output_filename: str = "avatar"
     export_fbx: bool = True
     export_obj: bool = False
 
     def is_complete(self) -> bool:
-        """Check if configuration is valid."""
+        """Check if output settings are valid."""
         return self.output_directory is not None
 
 
 @dataclass
 class GenerateState:
-    """State for Step 4: Generation."""
+    """State for Step 6: Generation."""
     is_generating: bool = False
     progress: float = 0.0
     status_message: str = ""
@@ -329,6 +347,7 @@ class AppState:
     image_input: ImageInputState = field(default_factory=ImageInputState)
     measurements: MeasurementsState = field(default_factory=MeasurementsState)
     configure: ConfigureState = field(default_factory=ConfigureState)
+    output_settings: OutputSettingsState = field(default_factory=OutputSettingsState)
     generate: GenerateState = field(default_factory=GenerateState)
 
     _on_state_change: Optional[Callable[[], None]] = field(default=None, repr=False)
@@ -352,6 +371,8 @@ class AppState:
             return self.measurements.parameters_computed
         elif self.current_step == WizardStep.CONFIGURE:
             return self.configure.is_complete()
+        elif self.current_step == WizardStep.OUTPUT_SETTINGS:
+            return self.output_settings.is_complete()
         elif self.current_step == WizardStep.GENERATE:
             return False  # Last step
         return False
@@ -394,5 +415,6 @@ class AppState:
         self.image_input = ImageInputState()
         self.measurements = MeasurementsState()
         self.configure = ConfigureState()
+        self.output_settings = OutputSettingsState()
         self.generate = GenerateState()
         self.notify_change()

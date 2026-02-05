@@ -25,6 +25,7 @@ class WizardNav(ctk.CTkFrame):
         WizardStep.MEASUREMENTS: "Measurements",
         WizardStep.ACCURACY_REVIEW: "Accuracy",
         WizardStep.CONFIGURE: "Configure",
+        WizardStep.OUTPUT_SETTINGS: "Output",
         WizardStep.GENERATE: "Generate",
     }
 

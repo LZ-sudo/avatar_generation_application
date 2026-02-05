@@ -49,16 +49,8 @@ class StepGenerate(ctk.CTkFrame):
         self._summary_frame = self._create_summary(content_frame)
         self._summary_frame.pack(pady=20)
 
-        self._generate_button = ctk.CTkButton(
-            content_frame,
-            text="Generate Avatar",
-            command=self._start_generation,
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
-        )
-        self._generate_button.pack(pady=(0, 20))
-
         self._progress_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        self._progress_frame.pack(pady=20)
         self._progress_display = ProgressDisplay(self._progress_frame, width=400)
         self._progress_display.pack()
 
@@ -172,6 +164,9 @@ class StepGenerate(ctk.CTkFrame):
     def on_enter(self) -> None:
         """Called when entering this step."""
         self._update_summary()
+        # Start generation automatically if not already running
+        if not self.app_state.generate.is_generating and not self.app_state.generate.is_complete():
+            self._start_generation()
 
     def _update_summary(self) -> None:
         """Update the summary display."""
@@ -180,39 +175,49 @@ class StepGenerate(ctk.CTkFrame):
             measurements_text = (
                 f"Height: {m.height_cm:.1f} cm\n"
                 f"Shoulder: {m.shoulder_width_cm:.1f} cm\n"
-                f"Chest: {m.chest_circumference_cm:.1f} cm"
+                f"Hip: {m.hip_width_cm:.1f} cm"
             )
         else:
             measurements_text = "Not extracted"
         self._summary_measurements.configure(text=measurements_text)
 
         c = self.app_state.configure
+        hair_display = c.hair_asset if c.hair_asset else "None"
         config_text = (
             f"Rig: {c.rig_type.value}\n"
-            f"Hair: {c.hair_style.value}"
+            f"Hair: {hair_display}\n"
+            f"FK/IK: {'Yes' if c.fk_ik_hybrid else 'No'}\n"
+            f"T-Pose: {'Yes' if c.t_pose else 'No'}"
         )
         self._summary_config.configure(text=config_text)
 
+        o = self.app_state.output_settings
+        formats = []
+        if o.export_fbx:
+            formats.append("FBX")
+        if o.export_obj:
+            formats.append("OBJ")
+        format_text = ", ".join(formats) if formats else "None"
+
         output_text = (
-            f"Directory: {c.output_directory.name if c.output_directory else 'Not set'}\n"
-            f"Filename: {c.output_filename}.fbx"
+            f"Directory: {o.output_directory.name if o.output_directory else 'Not set'}\n"
+            f"Filename: {o.output_filename}\n"
+            f"Formats: {format_text}"
         )
         self._summary_output.configure(text=output_text)
 
     def _start_generation(self) -> None:
         """Start the avatar generation process."""
-        self._generate_button.configure(state="disabled")
-        self._progress_frame.pack(pady=20)
         self._progress_display.reset()
         self.app_state.generate.is_generating = True
 
-        thread = threading.Thread(target=self._run_generation)
+        thread = threading.Thread(target=self._run_generation, daemon=True)
         thread.start()
 
     def _run_generation(self) -> None:
         """Run the generation process in a background thread."""
         def progress_callback(progress: float, status: str):
-            self.after(0, lambda: self._progress_display.set_progress(progress, status))
+            self.after(0, lambda p=progress, s=status: self._progress_display.set_progress(p, s))
             self.app_state.generate.progress = progress
             self.app_state.generate.status_message = status
 
@@ -221,11 +226,14 @@ class StepGenerate(ctk.CTkFrame):
                 measurements=self.app_state.measurements.to_dict(),
                 config={
                     "rig_type": self.app_state.configure.rig_type.value,
-                    "hair_style": self.app_state.configure.hair_style.value,
-                    "output_directory": str(self.app_state.configure.output_directory),
-                    "output_filename": self.app_state.configure.output_filename,
-                    "export_fbx": self.app_state.configure.export_fbx,
-                    "export_obj": self.app_state.configure.export_obj,
+                    "fk_ik_hybrid": self.app_state.configure.fk_ik_hybrid,
+                    "instrumented_arm": self.app_state.configure.instrumented_arm.value,
+                    "hair_asset": self.app_state.configure.hair_asset,
+                    "t_pose": self.app_state.configure.t_pose,
+                    "output_directory": str(self.app_state.output_settings.output_directory),
+                    "output_filename": self.app_state.output_settings.output_filename,
+                    "export_fbx": self.app_state.output_settings.export_fbx,
+                    "export_obj": self.app_state.output_settings.export_obj,
                 },
                 progress_callback=progress_callback,
             )
@@ -237,13 +245,13 @@ class StepGenerate(ctk.CTkFrame):
             self.after(0, self._on_generation_complete)
 
         except Exception as ex:
-            self.after(0, lambda: self._on_generation_error(str(ex)))
+            error_msg = str(ex)
+            self.after(0, lambda e=error_msg: self._on_generation_error(e))
 
     def _on_generation_complete(self) -> None:
         """Handle generation completion."""
         self.app_state.generate.is_generating = False
         self._progress_display.set_complete("Avatar generated successfully!")
-        self._generate_button.configure(state="normal", text="Regenerate")
         self._buttons_frame.pack(pady=20)
 
         if self.app_state.generate.preview_images:
@@ -256,7 +264,6 @@ class StepGenerate(ctk.CTkFrame):
         self.app_state.generate.is_generating = False
         self.app_state.generate.error_message = error
         self._progress_display.set_error(f"Error: {error}")
-        self._generate_button.configure(state="normal")
 
     def _show_preview(self, image_path: Path) -> None:
         """Display preview image."""
@@ -280,13 +287,13 @@ class StepGenerate(ctk.CTkFrame):
 
     def _open_output_folder(self) -> None:
         """Open the output folder in file explorer."""
-        if self.app_state.configure.output_directory:
+        if self.app_state.output_settings.output_directory:
             if sys.platform == "win32":
-                subprocess.run(["explorer", str(self.app_state.configure.output_directory)])
+                subprocess.run(["explorer", str(self.app_state.output_settings.output_directory)])
             elif sys.platform == "darwin":
-                subprocess.run(["open", str(self.app_state.configure.output_directory)])
+                subprocess.run(["open", str(self.app_state.output_settings.output_directory)])
             else:
-                subprocess.run(["xdg-open", str(self.app_state.configure.output_directory)])
+                subprocess.run(["xdg-open", str(self.app_state.output_settings.output_directory)])
 
     def _open_in_blender(self) -> None:
         """Open the generated file in Blender."""
