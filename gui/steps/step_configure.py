@@ -26,39 +26,6 @@ class StepConfigure(ctk.CTkFrame):
         "Game Engine": RigType.GAME_ENGINE.value,
     }
 
-    # Hair assets available in mpfb_hair_assets folder
-    HAIR_ASSETS = [
-        ("None", None),
-        ("Short Hair B", "Short_Hair_B"),
-        ("Female Hair 01", "fhair01"),
-        ("Hair 08", "hair_08"),
-        ("Male Hair 02", "mhair02"),
-        ("Elven Ashley May Hair", "elvs_ashley_may_hair"),
-        ("Elven Daisy Hair", "elvs_daisy_hair"),
-        ("Elven Hazel Hair", "elvs_hazel_hair"),
-        ("Elven Keylth Hair", "elvs_keylth_hair"),
-        ("Elven Short Daisy Hair", "elvs_short_daisy_hair"),
-        ("Elven That 80s Babe Hair", "elvs_that_80s_babe_hair"),
-        ("Elven Wavy Bob", "elvs_wavy_bob"),
-        ("Elven Witchy Lil Bob", "elvs_witchy_lil_bob"),
-    ]
-
-    # Mapping hair assets to preview images
-    HAIR_PREVIEW_IMAGES = {
-        "Short_Hair_B": "Short_Hair_B.jpg",
-        "fhair01": "fhair01.jpeg",
-        "hair_08": "hair_08.jpeg",
-        "mhair02": "mhair02.jpeg",
-        "elvs_ashley_may_hair": "elvs_ashley_may_hair.jpeg",
-        "elvs_daisy_hair": "elvs_daisy_hair.jpeg",
-        "elvs_hazel_hair": "elvs_hazel_hair.jpeg",
-        "elvs_keylth_hair": "elvs_keylth_hair.jpeg",
-        "elvs_short_daisy_hair": "elvs_short_daisy_hair.jpeg",
-        "elvs_that_80s_babe_hair": "elvs_that_80s_babe_hair.jpeg",
-        "elvs_wavy_bob": "elvs_wavy_bob.jpeg",
-        "elvs_witchy_lil_bob": "elvs_witchy_lil_bob.jpeg",
-    }
-
     INSTRUMENTED_ARM_OPTIONS = {
         "Left": InstrumentedArm.LEFT.value,
         "Right": InstrumentedArm.RIGHT.value,
@@ -68,7 +35,58 @@ class StepConfigure(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self._current_preview_image = None
+        self._hair_assets = self._load_hair_assets()
         self._build()
+
+    def _load_hair_assets(self) -> list[tuple[str, str]]:
+        """
+        Load hair assets from mpfb_hair_assets directory.
+
+        Returns:
+            List of tuples: (display_name, asset_name)
+        """
+        project_root = Path(__file__).parent.parent.parent
+        hair_assets_dir = project_root / "mesh_generation_module" / "mpfb_hair_assets"
+
+        assets = [("None", None)]
+
+        if not hair_assets_dir.exists():
+            return assets
+
+        for asset_dir in sorted(hair_assets_dir.iterdir()):
+            if not asset_dir.is_dir():
+                continue
+
+            asset_name = asset_dir.name
+            display_name = asset_name.replace("_", " ").title()
+
+            assets.append((display_name, asset_name))
+
+        return assets
+
+    def _get_preview_image_path(self, asset_name: str) -> Path:
+        """
+        Get the preview image path for a hair asset.
+
+        Searches for image files matching the asset name in the images directory.
+
+        Args:
+            asset_name: The name of the hair asset
+
+        Returns:
+            Path to the preview image, or None if not found
+        """
+        if asset_name is None:
+            return None
+
+        images_dir = Path(__file__).parent.parent / "images"
+
+        for ext in [".jpg", ".jpeg", ".png"]:
+            image_path = images_dir / f"{asset_name}{ext}"
+            if image_path.exists():
+                return image_path
+
+        return None
 
     def _build(self) -> None:
         """Build the step content."""
@@ -172,10 +190,10 @@ class StepConfigure(ctk.CTkFrame):
         )
         hair_label.pack(anchor="w")
 
-        hair_display_names = [name for name, _ in self.HAIR_ASSETS]
+        hair_display_names = [name for name, _ in self._hair_assets]
         current_hair_asset = self.app_state.configure.hair_asset
         current_hair_display = next(
-            (name for name, asset in self.HAIR_ASSETS if asset == current_hair_asset),
+            (name for name, asset in self._hair_assets if asset == current_hair_asset),
             hair_display_names[0]  # Default to "None"
         )
 
@@ -258,45 +276,43 @@ class StepConfigure(ctk.CTkFrame):
         """Update the hair preview image."""
         hair_asset = self.app_state.configure.hair_asset
 
-        if hair_asset is None or hair_asset not in self.HAIR_PREVIEW_IMAGES:
-            # No preview available
+        if hair_asset is None:
             self._preview_label.configure(
                 text="No preview available",
                 image=None,
             )
             self._current_preview_image = None
-        else:
-            # Load preview image
-            image_filename = self.HAIR_PREVIEW_IMAGES[hair_asset]
-            image_path = Path(__file__).parent.parent / "images" / image_filename
+            return
 
-            if image_path.exists():
-                try:
-                    pil_image = PILImage.open(image_path)
-                    # Resize to fit preview (max 330x330, maintain aspect ratio)
-                    pil_image.thumbnail((330, 330), PILImage.Resampling.LANCZOS)
-                    ctk_image = ctk.CTkImage(
-                        light_image=pil_image,
-                        dark_image=pil_image,
-                        size=pil_image.size
-                    )
-                    self._current_preview_image = ctk_image
-                    self._preview_label.configure(
-                        text="",
-                        image=ctk_image,
-                    )
-                except Exception as e:
-                    self._preview_label.configure(
-                        text=f"Error loading preview:\n{str(e)}",
-                        image=None,
-                    )
-                    self._current_preview_image = None
-            else:
-                self._preview_label.configure(
-                    text="Preview image not found",
-                    image=None,
-                )
-                self._current_preview_image = None
+        image_path = self._get_preview_image_path(hair_asset)
+
+        if image_path is None or not image_path.exists():
+            self._preview_label.configure(
+                text="Preview image not found",
+                image=None,
+            )
+            self._current_preview_image = None
+            return
+
+        try:
+            pil_image = PILImage.open(image_path)
+            pil_image.thumbnail((330, 330), PILImage.Resampling.LANCZOS)
+            ctk_image = ctk.CTkImage(
+                light_image=pil_image,
+                dark_image=pil_image,
+                size=pil_image.size
+            )
+            self._current_preview_image = ctk_image
+            self._preview_label.configure(
+                text="",
+                image=ctk_image,
+            )
+        except Exception as e:
+            self._preview_label.configure(
+                text=f"Error loading preview:\n{str(e)}",
+                image=None,
+            )
+            self._current_preview_image = None
 
     def _on_rig_change(self, value: str) -> None:
         """Handle rig type change."""
@@ -312,9 +328,8 @@ class StepConfigure(ctk.CTkFrame):
 
     def _on_hair_change(self, value: str) -> None:
         """Handle hair asset change."""
-        # Find the asset name for the selected display name
         hair_asset = next(
-            (asset for name, asset in self.HAIR_ASSETS if name == value),
+            (asset for name, asset in self._hair_assets if name == value),
             None
         )
         self.app_state.configure.hair_asset = hair_asset
