@@ -367,6 +367,11 @@ class StepImageInput(ctk.CTkFrame):
     def _extract_measurements(self) -> None:
         """Start the measurement extraction process."""
         self.app_state.image_input.is_extracting = True
+        # Disable all input fields during processing
+        self._front_picker.set_enabled(False)
+        self._gender_dropdown.set_enabled(False)
+        self._race_dropdown.set_enabled(False)
+        self._height_entry.configure(state="disabled")
         self._extract_button.start_processing("Extracting Measurements...")
         self._status_label.set_info("Extracting measurements...")
         self.app_state.notify_change()
@@ -393,6 +398,11 @@ class StepImageInput(ctk.CTkFrame):
         """Handle extraction completion on main thread."""
         self.app_state.image_input.is_extracting = False
         self.app_state.image_input.extraction_error = None
+        # Re-enable all input fields
+        self._front_picker.set_enabled(True)
+        self._gender_dropdown.set_enabled(True)
+        self._race_dropdown.set_enabled(True)
+        self._height_entry.configure(state="normal")
 
         # Update measurements state
         body = result.get("body_measurements", {})
@@ -427,6 +437,11 @@ class StepImageInput(ctk.CTkFrame):
         """Handle extraction error on main thread."""
         self.app_state.image_input.is_extracting = False
         self.app_state.image_input.extraction_error = error_message
+        # Re-enable all input fields
+        self._front_picker.set_enabled(True)
+        self._gender_dropdown.set_enabled(True)
+        self._race_dropdown.set_enabled(True)
+        self._height_entry.configure(state="normal")
 
         self._extract_button.stop_processing()
         self._status_label.set_error(f"Error: {error_message}")

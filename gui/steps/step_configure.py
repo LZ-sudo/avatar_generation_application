@@ -6,6 +6,7 @@ Allows the user to configure avatar generation options.
 
 import customtkinter as ctk
 from pathlib import Path
+from tkinter import filedialog
 from PIL import Image as PILImage
 
 from ..app_state import AppState, RigType, InstrumentedArm
@@ -137,16 +138,6 @@ class StepConfigure(ctk.CTkFrame):
         )
         self._rig_dropdown.pack(anchor="w", pady=(5, 15))
 
-        # FK/IK Hybrid
-        self._fk_ik_var = ctk.BooleanVar(value=self.app_state.configure.fk_ik_hybrid)
-        self._fk_ik_checkbox = ctk.CTkCheckBox(
-            content,
-            text="FK/IK Hybrid (for IMU motion capture)",
-            variable=self._fk_ik_var,
-            command=self._on_fk_ik_change,
-        )
-        self._fk_ik_checkbox.pack(anchor="w", pady=(0, 15))
-
         # Instrumented Arm
         arm_label = ctk.CTkLabel(
             content,
@@ -198,15 +189,35 @@ class StepConfigure(ctk.CTkFrame):
         )
         self._hair_dropdown.pack(anchor="w", pady=(5, 15))
 
-        # T-Pose
-        self._t_pose_var = ctk.BooleanVar(value=self.app_state.configure.t_pose)
-        self._t_pose_checkbox = ctk.CTkCheckBox(
+        # C3D File Upload (Placeholder for future functionality)
+        c3d_label = ctk.CTkLabel(
             content,
-            text="Export in T-Pose",
-            variable=self._t_pose_var,
-            command=self._on_t_pose_change,
+            text="C3D Motion Capture File (Optional)",
+            font=ctk.CTkFont(size=13),
+            text_color=ThemeColors.SUBTITLE,
         )
-        self._t_pose_checkbox.pack(anchor="w", pady=(0, 0))
+        c3d_label.pack(anchor="w")
+
+        c3d_frame = ctk.CTkFrame(content, fg_color="transparent")
+        c3d_frame.pack(anchor="w", pady=(5, 0), fill="x")
+
+        self._c3d_var = ctk.StringVar(value="")
+        self._c3d_entry = ctk.CTkEntry(
+            c3d_frame,
+            width=170,
+            textvariable=self._c3d_var,
+            state="disabled",
+            placeholder_text="No file selected",
+        )
+        self._c3d_entry.pack(side="left")
+
+        c3d_button = ctk.CTkButton(
+            c3d_frame,
+            text="Browse",
+            width=70,
+            command=self._open_c3d_picker,
+        )
+        c3d_button.pack(side="left", padx=(10, 0))
 
         return panel
 
@@ -293,11 +304,6 @@ class StepConfigure(ctk.CTkFrame):
         self.app_state.configure.rig_type = RigType(rig_value)
         self.app_state.notify_change()
 
-    def _on_fk_ik_change(self) -> None:
-        """Handle FK/IK hybrid checkbox change."""
-        self.app_state.configure.fk_ik_hybrid = self._fk_ik_var.get()
-        self.app_state.notify_change()
-
     def _on_arm_change(self, value: str) -> None:
         """Handle instrumented arm change."""
         arm_value = self.INSTRUMENTED_ARM_OPTIONS[value]
@@ -315,11 +321,20 @@ class StepConfigure(ctk.CTkFrame):
         self._update_preview()
         self.app_state.notify_change()
 
-    def _on_t_pose_change(self) -> None:
-        """Handle T-pose checkbox change."""
-        self.app_state.configure.t_pose = self._t_pose_var.get()
-        self.app_state.notify_change()
+    def _open_c3d_picker(self) -> None:
+        """Open C3D file picker dialog (placeholder for future functionality)."""
+        file_path = filedialog.askopenfilename(
+            title="Select C3D Motion Capture File",
+            filetypes=[("C3D files", "*.c3d"), ("All files", "*.*")],
+        )
+
+        if file_path:
+            self._c3d_var.set(file_path)
+            # TODO: Store C3D file path in app state when functionality is implemented
 
     def validate(self) -> bool:
         """Validate the step is complete."""
+        # Ensure FK/IK hybrid and T-Pose are always enabled
+        self.app_state.configure.fk_ik_hybrid = True
+        self.app_state.configure.t_pose = True
         return self.app_state.configure.is_complete()

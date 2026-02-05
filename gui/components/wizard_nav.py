@@ -30,12 +30,12 @@ class WizardNav(ctk.CTkFrame):
     }
 
     COLORS = {
-        "completed_bg": "#16a34a",
-        "current_bg": "#2563eb",
-        "upcoming_bg": "#d1d5db",
-        "completed_fg": "#ffffff",
-        "current_fg": "#ffffff",
-        "upcoming_fg": "#4b5563",
+        "completed_bg": "#6b7280",  # Dark grey for passed checkpoints
+        "current_bg": "#2563eb",     # Blue for current checkpoint
+        "upcoming_bg": "#ffffff",    # White for future checkpoints
+        "completed_fg": "#ffffff",   # White text for passed checkpoints
+        "current_fg": "#ffffff",     # White text for current checkpoint
+        "upcoming_fg": "#9ca3af",    # Grey text for future checkpoints
         "current_label": "#2563eb",
         "other_label": "#6b7280",
     }
@@ -73,7 +73,8 @@ class WizardNav(ctk.CTkFrame):
         for i, step in enumerate(steps):
             is_current = step == self.app_state.current_step
             is_completed = step.value < self.app_state.current_step.value
-            is_clickable = step.value <= self.app_state.current_step.value
+            # Only current step is clickable (linear workflow)
+            is_clickable = is_current
 
             indicator = self._create_step_indicator(
                 parent=container,
@@ -100,7 +101,7 @@ class WizardNav(ctk.CTkFrame):
 
         if is_completed:
             bg_color = self.COLORS["completed_bg"]
-            text = "\u2713"
+            text = str(number)
             text_color = self.COLORS["completed_fg"]
         elif is_current:
             bg_color = self.COLORS["current_bg"]
@@ -111,6 +112,7 @@ class WizardNav(ctk.CTkFrame):
             text = str(number)
             text_color = self.COLORS["upcoming_fg"]
 
+        # Create checkpoint circle without border
         circle = ctk.CTkLabel(
             frame,
             text=text,

@@ -60,7 +60,6 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self._step_container,
                 self.app_state,
                 on_navigate_next=self._go_next,
-                on_navigate_back=self._go_back,
             ),
             WizardStep.CONFIGURE: StepConfigure(self._step_container, self.app_state),
             WizardStep.OUTPUT_SETTINGS: StepOutputSettings(
@@ -97,14 +96,6 @@ class AvatarGenerationView(ctk.CTkFrame):
         nav_content = ctk.CTkFrame(nav_frame, fg_color="transparent")
         nav_content.pack(fill="x", padx=30, pady=15)
 
-        self._back_button = ctk.CTkButton(
-            nav_content,
-            text="Back",
-            command=self._go_back,
-            state="disabled",
-        )
-        self._back_button.pack(side="left")
-
         self._next_button = ctk.CTkButton(
             nav_content,
             text="Next",
@@ -122,10 +113,7 @@ class AvatarGenerationView(ctk.CTkFrame):
 
     def _update_navigation_buttons(self) -> None:
         """Update navigation button states."""
-        back_state = "normal" if self.app_state.can_go_back() else "disabled"
         next_state = "normal" if self.app_state.can_go_next() else "disabled"
-
-        self._back_button.configure(state=back_state)
 
         # Hide Next button on OUTPUT_SETTINGS and GENERATE steps
         if self.app_state.current_step in (WizardStep.OUTPUT_SETTINGS, WizardStep.GENERATE):

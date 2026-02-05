@@ -233,6 +233,11 @@ class LabeledInputField(ctk.CTkFrame):
         except ValueError:
             return None
 
+    def set_enabled(self, enabled: bool) -> None:
+        """Enable or disable the input field."""
+        state = "normal" if enabled else "disabled"
+        self._entry.configure(state=state)
+
 
 class LabeledDropdown(ctk.CTkFrame):
     """
@@ -299,6 +304,11 @@ class LabeledDropdown(ctk.CTkFrame):
     def get_value(self) -> str:
         """Get the current value."""
         return self._var.get()
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Enable or disable the dropdown."""
+        state = "normal" if enabled else "disabled"
+        self._dropdown.configure(state=state)
 
 
 class IconLabel(ctk.CTkFrame):

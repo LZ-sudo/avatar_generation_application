@@ -121,12 +121,10 @@ class StepAccuracyReview(ctk.CTkFrame):
         parent: ctk.CTkFrame,
         app_state: AppState,
         on_navigate_next: Callable[[], None] = None,
-        on_navigate_back: Callable[[], None] = None,
     ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.on_navigate_next = on_navigate_next
-        self.on_navigate_back = on_navigate_back
         self._measurement_rows: list[MeasurementRow] = []
         self._build()
 
@@ -197,35 +195,21 @@ class StepAccuracyReview(ctk.CTkFrame):
         )
         self._rows_container.pack()
 
-        # Button frame - centered with same width as panel
+        # Button frame - centered
         button_frame = ctk.CTkFrame(
             content_frame,
             fg_color="transparent",
-            width=self.TABLE_WIDTH + 40,  # Account for panel padding
-            height=40,
         )
         button_frame.pack(pady=(10, 0))
-        button_frame.pack_propagate(False)
 
-        # Back button
-        self._back_button = ActionButton(
-            button_frame,
-            text="Back to Measurements",
-            command=self._on_back_click,
-            primary=False,
-            fg_color="#6b7280",
-            hover_color="#4b5563",
-        )
-        self._back_button.pack(side="left")
-
-        # Proceed button
+        # Proceed button (centered)
         self._proceed_button = ActionButton(
             button_frame,
             text="Proceed to Configure",
             command=self._on_proceed_click,
             primary=True,
         )
-        self._proceed_button.pack(side="right")
+        self._proceed_button.pack()
 
     def on_enter(self) -> None:
         """Called when entering this step."""
@@ -327,11 +311,6 @@ class StepAccuracyReview(ctk.CTkFrame):
                 text_color=ThemeColors.SUBTITLE,
             )
             info_label.pack(anchor="w", pady=(8, 0))
-
-    def _on_back_click(self) -> None:
-        """Handle back button click."""
-        if self.on_navigate_back:
-            self.on_navigate_back()
 
     def _on_proceed_click(self) -> None:
         """Handle proceed button click."""

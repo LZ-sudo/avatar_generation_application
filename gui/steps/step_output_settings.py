@@ -153,36 +153,6 @@ class StepOutputSettings(ctk.CTkFrame):
         )
         extension_label.pack(side="left", padx=(5, 0))
 
-        # Export Formats
-        export_label = ctk.CTkLabel(
-            content,
-            text="Export Formats",
-            font=ctk.CTkFont(size=13),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        export_label.pack(anchor="w")
-
-        checkbox_frame = ctk.CTkFrame(content, fg_color="transparent")
-        checkbox_frame.pack(anchor="w", pady=(5, 0))
-
-        self._export_fbx_var = ctk.BooleanVar(value=self.app_state.output_settings.export_fbx)
-        self._export_fbx_checkbox = ctk.CTkCheckBox(
-            checkbox_frame,
-            text="Export FBX",
-            variable=self._export_fbx_var,
-            command=self._on_export_fbx_change,
-        )
-        self._export_fbx_checkbox.pack(side="left", padx=(0, 20))
-
-        self._export_obj_var = ctk.BooleanVar(value=self.app_state.output_settings.export_obj)
-        self._export_obj_checkbox = ctk.CTkCheckBox(
-            checkbox_frame,
-            text="Export OBJ",
-            variable=self._export_obj_var,
-            command=self._on_export_obj_change,
-        )
-        self._export_obj_checkbox.pack(side="left")
-
         return panel
 
     def _open_folder_picker(self) -> None:
@@ -201,18 +171,6 @@ class StepOutputSettings(ctk.CTkFrame):
     def _on_filename_change(self, *args) -> None:
         """Handle filename change."""
         self.app_state.output_settings.output_filename = self._filename_var.get() or "avatar"
-        self._update_generate_button()
-        self.app_state.notify_change()
-
-    def _on_export_fbx_change(self) -> None:
-        """Handle export FBX checkbox change."""
-        self.app_state.output_settings.export_fbx = self._export_fbx_var.get()
-        self._update_generate_button()
-        self.app_state.notify_change()
-
-    def _on_export_obj_change(self) -> None:
-        """Handle export OBJ checkbox change."""
-        self.app_state.output_settings.export_obj = self._export_obj_var.get()
         self._update_generate_button()
         self.app_state.notify_change()
 
@@ -237,5 +195,8 @@ class StepOutputSettings(ctk.CTkFrame):
 
     def validate(self) -> bool:
         """Validate the step is complete."""
+        # Always export as FBX only
+        self.app_state.output_settings.export_fbx = True
+        self.app_state.output_settings.export_obj = False
         self._update_validation()
         return self.app_state.output_settings.is_complete()

@@ -250,6 +250,9 @@ class StepMeasurements(ctk.CTkFrame):
         """Start the mesh parameter computation process."""
         self.app_state.measurements.is_computing_parameters = True
         self.app_state.measurements.parameters_error = None
+        # Disable all input fields during processing
+        for field in self._fields.values():
+            field.set_enabled(False)
         self._configure_button.start_processing("Configuring Mesh...")
         self._status_label.set_info("Computing mesh parameters...")
         self.app_state.notify_change()
@@ -273,6 +276,9 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state.measurements.parameters_report = result
         self.app_state.measurements.parameters_error = None
         self._computation_complete = True
+        # Re-enable all input fields
+        for field in self._fields.values():
+            field.set_enabled(True)
 
         # Show summary from report
         summary = result.get("summary", {})
@@ -296,6 +302,9 @@ class StepMeasurements(ctk.CTkFrame):
         """Handle computation error on main thread."""
         self.app_state.measurements.is_computing_parameters = False
         self.app_state.measurements.parameters_error = error_message
+        # Re-enable all input fields
+        for field in self._fields.values():
+            field.set_enabled(True)
 
         self._configure_button.stop_processing()
         error_text = f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}"

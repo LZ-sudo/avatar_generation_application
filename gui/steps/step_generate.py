@@ -77,14 +77,16 @@ class StepGenerate(ctk.CTkFrame):
             text="Open Output Folder",
             command=self._open_output_folder,
         )
-        self._open_folder_button.pack(side="left", padx=10)
+        self._open_folder_button.pack(side="left", padx=5)
 
-        self._open_blender_button = ctk.CTkButton(
+        self._close_button = ctk.CTkButton(
             self._buttons_frame,
-            text="Open in Blender",
-            command=self._open_in_blender,
+            text="Close Application",
+            command=self._close_application,
+            fg_color="#dc2626",
+            hover_color="#b91c1c",
         )
-        self._open_blender_button.pack(side="left", padx=10)
+        self._close_button.pack(side="left", padx=5)
 
     def _create_summary(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the settings summary panel."""
@@ -174,8 +176,16 @@ class StepGenerate(ctk.CTkFrame):
         if m.height_cm:
             measurements_text = (
                 f"Height: {m.height_cm:.1f} cm\n"
-                f"Shoulder: {m.shoulder_width_cm:.1f} cm\n"
-                f"Hip: {m.hip_width_cm:.1f} cm"
+                f"Head Width: {m.head_width_cm:.1f} cm\n"
+                f"Shoulder Width: {m.shoulder_width_cm:.1f} cm\n"
+                f"Hip Width: {m.hip_width_cm:.1f} cm\n"
+                f"Upper Arm: {m.upper_arm_length_cm:.1f} cm\n"
+                f"Forearm: {m.forearm_length_cm:.1f} cm\n"
+                f"Upper Leg: {m.upper_leg_length_cm:.1f} cm\n"
+                f"Lower Leg: {m.lower_leg_length_cm:.1f} cm\n"
+                f"Shoulder to Waist: {m.shoulder_to_waist_cm:.1f} cm\n"
+                f"Hand Length: {m.hand_length_cm:.1f} cm\n"
+                f"Hair Length: {m.hair_length_cm:.1f} cm"
             )
         else:
             measurements_text = "Not extracted"
@@ -185,24 +195,18 @@ class StepGenerate(ctk.CTkFrame):
         hair_display = c.hair_asset if c.hair_asset else "None"
         config_text = (
             f"Rig: {c.rig_type.value}\n"
-            f"Hair: {hair_display}\n"
-            f"FK/IK: {'Yes' if c.fk_ik_hybrid else 'No'}\n"
-            f"T-Pose: {'Yes' if c.t_pose else 'No'}"
+            f"Instrumented Arm: {c.instrumented_arm.value.capitalize()}\n"
+            f"Hair Asset: {hair_display}\n"
+            f"FK/IK Hybrid: Enabled\n"
+            f"Export Pose: T-Pose"
         )
         self._summary_config.configure(text=config_text)
 
         o = self.app_state.output_settings
-        formats = []
-        if o.export_fbx:
-            formats.append("FBX")
-        if o.export_obj:
-            formats.append("OBJ")
-        format_text = ", ".join(formats) if formats else "None"
-
         output_text = (
             f"Directory: {o.output_directory.name if o.output_directory else 'Not set'}\n"
-            f"Filename: {o.output_filename}\n"
-            f"Formats: {format_text}"
+            f"Filename: {o.output_filename}.fbx\n"
+            f"Format: FBX"
         )
         self._summary_output.configure(text=output_text)
 
@@ -295,7 +299,6 @@ class StepGenerate(ctk.CTkFrame):
             else:
                 subprocess.run(["xdg-open", str(self.app_state.output_settings.output_directory)])
 
-    def _open_in_blender(self) -> None:
-        """Open the generated file in Blender."""
-        if self.app_state.generate.output_fbx_path:
-            self.backend.open_in_blender(self.app_state.generate.output_fbx_path)
+    def _close_application(self) -> None:
+        """Close the application."""
+        self.master.quit()

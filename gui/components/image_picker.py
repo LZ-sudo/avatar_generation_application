@@ -61,6 +61,7 @@ class ImagePicker(ctk.CTkFrame):
         self._selected_path: Optional[Path] = None
         self._width = width
         self._height = height
+        self._enabled = True
 
         self._build()
         self.bind("<Button-1>", self._open_file_picker)
@@ -152,6 +153,9 @@ class ImagePicker(ctk.CTkFrame):
 
     def _open_file_picker(self, event=None) -> None:
         """Open the file picker dialog."""
+        if not self._enabled:
+            return
+
         file_path = filedialog.askopenfilename(
             title=f"Select {self.label}",
             filetypes=self.ALLOWED_EXTENSIONS,
@@ -211,3 +215,11 @@ class ImagePicker(ctk.CTkFrame):
     def has_image(self) -> bool:
         """Check if an image has been selected."""
         return self._selected_path is not None
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Enable or disable the image picker."""
+        self._enabled = enabled
+        if enabled:
+            self.configure(cursor="hand2")
+        else:
+            self.configure(cursor="arrow")
