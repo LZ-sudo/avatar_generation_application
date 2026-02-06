@@ -30,7 +30,9 @@ class StepMeasurements(ctk.CTkFrame):
     Displays extracted measurements with visualization and allows manual editing.
     """
 
-    VISUALIZATION_SIZE = (350, 450)
+    VISUALIZATION_SIZE = (280, 360)  # Fixed size for visualization image
+    VISUALIZATION_HEIGHT = 450  # Fixed height for visualization container
+    MEASUREMENTS_WIDTH = 320  # Fixed width for measurements container
 
     def __init__(
         self,
@@ -67,8 +69,8 @@ class StepMeasurements(ctk.CTkFrame):
         # Left column - Visualization
         vis_panel = Card(
             main_frame,
-            width=self.VISUALIZATION_SIZE[0] + 20,
-            height=self.VISUALIZATION_SIZE[1] + 60,
+            width=self.VISUALIZATION_SIZE[0] + 40,  # Image width + padding
+            height=self.VISUALIZATION_HEIGHT,
         )
         vis_panel.pack(side="left", padx=(0, 20))
         vis_panel.pack_propagate(False)
@@ -87,12 +89,13 @@ class StepMeasurements(ctk.CTkFrame):
         self._vis_label.pack(pady=(0, 5))
 
         # Right column - Measurements
-        right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
-        right_column.pack(side="left", fill="y")
-
-        # Extracted measurements panel
-        measurements_panel = Card(right_column)
-        measurements_panel.pack(fill="x")
+        measurements_panel = Card(
+            main_frame,
+            width=self.MEASUREMENTS_WIDTH,
+            height=self.VISUALIZATION_HEIGHT,
+        )
+        measurements_panel.pack(side="left")
+        measurements_panel.pack_propagate(False)
 
         measurements_content = measurements_panel.content
 
@@ -133,21 +136,31 @@ class StepMeasurements(ctk.CTkFrame):
         )
         info_label.pack(anchor="w", pady=(8, 0))
 
-        # Configure Mesh button (inside right column, below measurements panel)
-        button_frame = ctk.CTkFrame(right_column, fg_color="transparent")
-        button_frame.pack(fill="x", pady=(10, 0))
+        # Configure Mesh button (centered below both panels)
+        button_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+        button_container.pack(pady=(20, 0))
+
+        # Info label about processing time
+        self._processing_info_label = ctk.CTkLabel(
+            button_container,
+            text="Processing may take up to 2 minutes to complete",
+            font=ctk.CTkFont(size=12),
+            text_color=ThemeColors.SUBTITLE,
+        )
+        self._processing_info_label.pack(pady=(0, 10))
+        self._processing_info_label.pack_forget()  # Hidden initially
 
         self._configure_button = ActionButton(
-            button_frame,
+            button_container,
             text="Configure Mesh",
-            width=180,
+            width=200,
             height=40,
             command=self._compute_parameters,
         )
         self._configure_button.pack()
 
         # Status label for parameter computation
-        self._status_label = StatusLabel(button_frame, text="")
+        self._status_label = StatusLabel(button_container, text="")
         self._status_label.pack(pady=(8, 0))
 
     def on_enter(self) -> None:
@@ -165,6 +178,7 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._navigate_to_accuracy_review,
             )
+            self._processing_info_label.pack_forget()
             # Show previous result summary if available
             report = self.app_state.measurements.parameters_report
             if report:
@@ -173,15 +187,16 @@ class StepMeasurements(ctk.CTkFrame):
                 total = summary.get("total_measurements", 0)
                 mean_error = summary.get("mean_absolute_error", 0)
                 self._status_label.set_success(
-                    f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm"
+                    f"{converged}/{total} measurements converged, Mean error: {mean_error:.2f}cm"
                 )
         else:
             self._computation_complete = False
             self._configure_button.configure(
-                text="Configure Mesh",
+                text="Configuring Mesh",
                 state="normal",
                 command=self._compute_parameters,
             )
+            self._processing_info_label.pack_forget()
             self._status_label.clear()
 
     def _load_visualization(self) -> None:
@@ -243,8 +258,10 @@ class StepMeasurements(ctk.CTkFrame):
         # Disable all input fields during processing
         for field in self._fields.values():
             field.set_enabled(False)
-        self._configure_button.start_processing("Configuring Mesh...")
-        self._status_label.set_info("Computing mesh parameters...")
+        # Disable button and show processing info
+        self._configure_button.configure(state="disabled")
+        self._processing_info_label.pack(pady=(0, 10), before=self._configure_button)
+        self._status_label.clear()
         self.app_state.notify_change()
 
         thread = threading.Thread(target=self._run_parameter_computation)
@@ -270,16 +287,24 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
+        # Hide processing info label
+        self._processing_info_label.pack_forget()
+
         # Show summary from report
         summary = result.get("summary", {})
         converged = summary.get("converged_count", 0)
         total = summary.get("total_measurements", 0)
         mean_error = summary.get("mean_absolute_error", 0)
 
-        # Change button to "Review Accuracy" for navigation
-        self._configure_button.stop_processing("Review Accuracy", self._navigate_to_accuracy_review)
+        # Update button text and re-enable for navigation
+        self._configure_button.configure(
+            text="Review Accuracy",
+            state="normal",
+            command=self._navigate_to_accuracy_review,
+        )
+
         self._status_label.set_success(
-            f"Parameters computed! {converged}/{total} converged, MAE: {mean_error:.2f}cm"
+            f"{converged}/{total} measurements converged, Mean error: {mean_error:.2f}cm"
         )
         self.app_state.notify_change()
 
@@ -296,8 +321,14 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
-        self._configure_button.stop_processing()
-        error_text = f"Error: {error_message[:50]}..." if len(error_message) > 50 else f"Error: {error_message}"
+        # Hide processing info label
+        self._processing_info_label.pack_forget()
+
+        # Re-enable button
+        self._configure_button.configure(state="normal")
+
+        # Show error message
+        error_text = f"Error: {error_message[:80]}..." if len(error_message) > 80 else f"Error: {error_message}"
         self._status_label.set_error(error_text)
         self.app_state.notify_change()
 
