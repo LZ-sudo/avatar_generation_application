@@ -115,8 +115,9 @@ class AvatarGenerationView(ctk.CTkFrame):
         """Update navigation button states."""
         next_state = "normal" if self.app_state.can_go_next() else "disabled"
 
-        # Hide Next button on OUTPUT_SETTINGS and GENERATE steps
-        if self.app_state.current_step in (WizardStep.OUTPUT_SETTINGS, WizardStep.GENERATE):
+        # Hide Next button on ACCURACY_REVIEW, OUTPUT_SETTINGS and GENERATE steps
+        # (These steps have their own navigation buttons)
+        if self.app_state.current_step in (WizardStep.ACCURACY_REVIEW, WizardStep.OUTPUT_SETTINGS, WizardStep.GENERATE):
             self._next_button.pack_forget()
         else:
             self._next_button.configure(text="Next", state=next_state)
