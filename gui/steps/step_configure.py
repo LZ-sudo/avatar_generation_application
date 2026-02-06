@@ -72,23 +72,27 @@ class StepConfigure(ctk.CTkFrame):
         """
         Get the preview image path for a hair asset.
 
-        Searches for image files matching the asset name in the images directory.
+        Searches for .thumb files inside the hair asset directory.
 
         Args:
             asset_name: The name of the hair asset
 
         Returns:
-            Path to the preview image, or None if not found
+            Path to the preview .thumb image, or None if not found
         """
         if asset_name is None:
             return None
 
-        images_dir = Path(__file__).parent.parent / "images"
+        project_root = Path(__file__).parent.parent.parent
+        hair_asset_dir = project_root / "mesh_generation_module" / "mpfb_hair_assets" / asset_name
 
-        for ext in [".jpg", ".jpeg", ".png"]:
-            image_path = images_dir / f"{asset_name}{ext}"
-            if image_path.exists():
-                return image_path
+        if not hair_asset_dir.exists():
+            return None
+
+        # Look for .thumb files in the asset directory
+        thumb_files = list(hair_asset_dir.glob("*.thumb"))
+        if thumb_files:
+            return thumb_files[0]
 
         return None
 
