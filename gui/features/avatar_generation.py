@@ -61,7 +61,11 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.app_state,
                 on_navigate_next=self._go_next,
             ),
-            WizardStep.CONFIGURE: StepConfigure(self._step_container, self.app_state),
+            WizardStep.CONFIGURE: StepConfigure(
+                self._step_container,
+                self.app_state,
+                on_navigate_next=self._go_next,
+            ),
             WizardStep.OUTPUT_SETTINGS: StepOutputSettings(
                 self._step_container,
                 self.app_state,
@@ -87,41 +91,9 @@ class AvatarGenerationView(ctk.CTkFrame):
         self._current_step_widget = self.steps[WizardStep.IMAGE_INPUT]
         self._current_step_widget.pack(expand=True, fill="both")
 
-        divider2 = ctk.CTkFrame(self, height=1, fg_color=self.COLORS["divider"])
-        divider2.pack(fill="x")
-
-        nav_frame = ctk.CTkFrame(self, fg_color=self.COLORS["nav_bg"])
-        nav_frame.pack(fill="x")
-
-        nav_content = ctk.CTkFrame(nav_frame, fg_color="transparent")
-        nav_content.pack(fill="x", padx=30, pady=15)
-
-        self._next_button = ctk.CTkButton(
-            nav_content,
-            text="Next",
-            command=self._go_next,
-            state="disabled",
-        )
-        self._next_button.pack(side="right")
-
-        self._update_navigation_buttons()
-
     def _on_state_change(self) -> None:
         """Handle state changes."""
-        self._update_navigation_buttons()
         self.wizard_nav.update_indicators()
-
-    def _update_navigation_buttons(self) -> None:
-        """Update navigation button states."""
-        next_state = "normal" if self.app_state.can_go_next() else "disabled"
-
-        # Hide Next button on ACCURACY_REVIEW, OUTPUT_SETTINGS and GENERATE steps
-        # (These steps have their own navigation buttons)
-        if self.app_state.current_step in (WizardStep.ACCURACY_REVIEW, WizardStep.OUTPUT_SETTINGS, WizardStep.GENERATE):
-            self._next_button.pack_forget()
-        else:
-            self._next_button.configure(text="Next", state=next_state)
-            self._next_button.pack(side="right")
 
     def _show_step(self, step: WizardStep) -> None:
         """Display the specified step."""

@@ -8,6 +8,7 @@ import customtkinter as ctk
 from pathlib import Path
 
 from ..app_state import AppState, RigType, InstrumentedArm
+from typing import Callable, Optional
 from ..components.ui_elements import (
     ThemeColors,
     PageHeader,
@@ -36,9 +37,15 @@ class StepConfigure(ctk.CTkFrame):
         "Right": InstrumentedArm.RIGHT.value,
     }
 
-    def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        app_state: AppState,
+        on_navigate_next: Optional[Callable[[], None]] = None,
+    ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
+        self.on_navigate_next = on_navigate_next
         self._hair_assets = self._load_hair_assets()
         self._build()
 
@@ -119,6 +126,17 @@ class StepConfigure(ctk.CTkFrame):
 
         preview_panel = self._create_hair_preview(panels_frame)
         preview_panel.pack(side="left", padx=15, anchor="n")
+
+        # Next button (centered)
+        self._next_button = ctk.CTkButton(
+            content_frame,
+            text="Next",
+            command=self._on_next_click,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+        )
+        self._next_button.pack(pady=(30, 0))
 
     def _create_avatar_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the avatar options panel."""
@@ -277,6 +295,11 @@ class StepConfigure(ctk.CTkFrame):
         """Handle C3D file selection (placeholder for future functionality)."""
         # TODO: Store C3D file path in app state when functionality is implemented
         pass
+
+    def _on_next_click(self) -> None:
+        """Handle next button click."""
+        if self.on_navigate_next:
+            self.on_navigate_next()
 
     def validate(self) -> bool:
         """Validate the step is complete."""

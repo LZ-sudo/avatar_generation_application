@@ -164,11 +164,13 @@ class StepGenerate(ctk.CTkFrame):
     def _run_generation(self) -> None:
         """Run the generation process in a background thread."""
         def progress_callback(progress: float, status: str):
+            print(f"[DEBUG] Progress callback: {progress*100:.0f}% - {status}")
             self.after(0, lambda p=progress, s=status: self._progress_display.set_progress(p, s))
             self.app_state.generate.progress = progress
             self.app_state.generate.status_message = status
 
         try:
+            print("[DEBUG] Starting generation...")
             result = self.backend.generate_avatar(
                 measurements=self.app_state.measurements.to_dict(),
                 config={
@@ -185,18 +187,22 @@ class StepGenerate(ctk.CTkFrame):
                 progress_callback=progress_callback,
             )
 
+            print(f"[DEBUG] Generation complete, result: {result}")
             self.app_state.generate.output_fbx_path = result.get("fbx_path")
             self.app_state.generate.output_obj_path = result.get("obj_path")
             self.app_state.generate.preview_images = result.get("preview_images", [])
 
+            print("[DEBUG] Calling _on_generation_complete...")
             self.after(0, self._on_generation_complete)
 
         except Exception as ex:
+            print(f"[DEBUG] Generation error: {ex}")
             error_msg = str(ex)
             self.after(0, lambda e=error_msg: self._on_generation_error(e))
 
     def _on_generation_complete(self) -> None:
         """Handle generation completion."""
+        print("[DEBUG] _on_generation_complete called")
         self.app_state.generate.is_generating = False
         self._progress_display.set_complete("Avatar generated successfully!")
         self._buttons_frame.pack(pady=20)
@@ -208,6 +214,7 @@ class StepGenerate(ctk.CTkFrame):
 
     def _on_generation_error(self, error: str) -> None:
         """Handle generation error."""
+        print(f"[DEBUG] _on_generation_error called with: {error}")
         self.app_state.generate.is_generating = False
         self.app_state.generate.error_message = error
         self._progress_display.set_error(f"Error: {error}")

@@ -192,7 +192,7 @@ class StepMeasurements(ctk.CTkFrame):
         else:
             self._computation_complete = False
             self._configure_button.configure(
-                text="Configuring Mesh",
+                text="Configure Mesh",
                 state="normal",
                 command=self._compute_parameters,
             )
