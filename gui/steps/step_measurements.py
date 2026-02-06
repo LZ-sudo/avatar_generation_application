@@ -19,6 +19,7 @@ from ..components.ui_elements import (
     LabeledInputField,
     ActionButton,
     StatusLabel,
+    Card,
 )
 
 
@@ -64,47 +65,36 @@ class StepMeasurements(ctk.CTkFrame):
         main_frame.pack(pady=10)
 
         # Left column - Visualization
-        vis_panel = ctk.CTkFrame(
+        vis_panel = Card(
             main_frame,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
             width=self.VISUALIZATION_SIZE[0] + 20,
             height=self.VISUALIZATION_SIZE[1] + 60,
         )
         vis_panel.pack(side="left", padx=(0, 20))
         vis_panel.pack_propagate(False)
 
-        vis_title = SectionTitle(vis_panel, text="Detection Visualization")
-        vis_title.pack(pady=(15, 10))
+        vis_title = SectionTitle(vis_panel.content, text="Detection Visualization")
+        vis_title.pack(pady=(5, 10))
 
         self._vis_label = ctk.CTkLabel(
-            vis_panel,
+            vis_panel.content,
             text="No visualization available",
             font=ctk.CTkFont(size=12),
             text_color=ThemeColors.SUBTITLE,
             width=self.VISUALIZATION_SIZE[0],
             height=self.VISUALIZATION_SIZE[1],
         )
-        self._vis_label.pack(padx=10, pady=(0, 10))
+        self._vis_label.pack(pady=(0, 5))
 
         # Right column - Measurements
         right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
         right_column.pack(side="left", fill="y")
 
         # Extracted measurements panel
-        measurements_panel = ctk.CTkFrame(
-            right_column,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
+        measurements_panel = Card(right_column)
         measurements_panel.pack(fill="x")
 
-        measurements_content = ctk.CTkFrame(measurements_panel, fg_color="transparent")
-        measurements_content.pack(padx=20, pady=15)
+        measurements_content = measurements_panel.content
 
         measurements_title = SectionTitle(measurements_content, text="Extracted Measurements")
         measurements_title.pack(anchor="w", pady=(0, 10))

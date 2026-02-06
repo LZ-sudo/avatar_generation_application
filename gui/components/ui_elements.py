@@ -6,6 +6,7 @@ to ensure consistent styling and reduce code duplication.
 """
 
 import customtkinter as ctk
+from pathlib import Path
 from typing import Callable, Optional
 
 
@@ -560,3 +561,312 @@ class StatusLabel(ctk.CTkLabel):
     def clear(self) -> None:
         """Clear the status message."""
         self.configure(text="")
+
+
+class SectionHeader(ctk.CTkFrame):
+    """
+    Section header with title and separator line.
+
+    Combines a SectionTitle with a horizontal separator for consistent section headers.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        text: str,
+        font_size: int = 16,
+    ):
+        super().__init__(parent, fg_color="transparent")
+
+        self._title = SectionTitle(self, text=text, font_size=font_size)
+        self._title.pack(anchor="w")
+
+        self._separator = ctk.CTkFrame(self, height=1, fg_color=ThemeColors.PANEL_BORDER)
+        self._separator.pack(fill="x", pady=(10, 15))
+
+    def set_text(self, text: str) -> None:
+        """Update the header text."""
+        self._title.configure(text=text)
+
+
+class ImagePreview(ctk.CTkLabel):
+    """
+    Image preview component with automatic loading and error handling.
+
+    Handles image loading, thumbnailing, and displays error messages if loading fails.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        width: int = 300,
+        height: int = 300,
+        placeholder_text: str = "No preview available",
+        bg_color: Optional[str] = None,
+    ):
+        super().__init__(
+            parent,
+            text=placeholder_text,
+            width=width,
+            height=height,
+            fg_color=bg_color or ThemeColors.PREVIEW_BG,
+            corner_radius=10,
+            text_color=ThemeColors.SUBTITLE,
+        )
+        self._width = width
+        self._height = height
+        self._placeholder_text = placeholder_text
+        self._current_image = None
+
+    def load_image(self, image_path: Path) -> bool:
+        """
+        Load and display an image.
+
+        Args:
+            image_path: Path to the image file
+
+        Returns:
+            True if loaded successfully, False otherwise
+        """
+        if image_path is None:
+            self.clear()
+            return False
+
+        if not image_path.exists():
+            self.configure(text="Image not found", image=None)
+            self._current_image = None
+            return False
+
+        try:
+            from PIL import Image as PILImage
+
+            pil_image = PILImage.open(image_path)
+            pil_image.thumbnail((self._width, self._height), PILImage.Resampling.LANCZOS)
+
+            ctk_image = ctk.CTkImage(
+                light_image=pil_image,
+                dark_image=pil_image,
+                size=pil_image.size
+            )
+
+            self._current_image = ctk_image
+            self.configure(text="", image=ctk_image)
+            return True
+
+        except Exception as e:
+            self.configure(text=f"Error loading image:\n{str(e)}", image=None)
+            self._current_image = None
+            return False
+
+    def clear(self) -> None:
+        """Clear the preview and show placeholder text."""
+        self.configure(text=self._placeholder_text, image=None)
+        self._current_image = None
+
+
+class FilePicker(ctk.CTkFrame):
+    """
+    File picker component with entry field and browse button.
+
+    Displays selected file path and opens file dialog when browse button is clicked.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        label: str,
+        filetypes: list[tuple[str, str]] = None,
+        entry_width: int = 200,
+        on_file_selected: Optional[Callable[[Path], None]] = None,
+    ):
+        super().__init__(parent, fg_color="transparent")
+        self._label_text = label
+        self._filetypes = filetypes or [("All files", "*.*")]
+        self._on_file_selected = on_file_selected
+        self._selected_path: Optional[Path] = None
+
+        # Label
+        if label:
+            label_widget = ctk.CTkLabel(
+                self,
+                text=label,
+                font=ctk.CTkFont(size=13),
+                text_color=ThemeColors.SUBTITLE,
+            )
+            label_widget.pack(anchor="w")
+
+        # Entry and button frame
+        picker_frame = ctk.CTkFrame(self, fg_color="transparent")
+        picker_frame.pack(anchor="w", pady=(5, 0), fill="x")
+
+        self._path_var = ctk.StringVar(value="")
+        self._entry = ctk.CTkEntry(
+            picker_frame,
+            width=entry_width,
+            textvariable=self._path_var,
+            state="readonly",
+            placeholder_text="No file selected",
+        )
+        self._entry.pack(side="left")
+
+        self._browse_button = ctk.CTkButton(
+            picker_frame,
+            text="Browse",
+            width=70,
+            command=self._open_file_dialog,
+        )
+        self._browse_button.pack(side="left", padx=(10, 0))
+
+    def _open_file_dialog(self) -> None:
+        """Open file selection dialog."""
+        from tkinter import filedialog
+
+        file_path = filedialog.askopenfilename(
+            title=f"Select {self._label_text}",
+            filetypes=self._filetypes,
+        )
+
+        if file_path:
+            path = Path(file_path)
+            self.set_path(path)
+
+            if self._on_file_selected:
+                self._on_file_selected(path)
+
+    def set_path(self, path: Optional[Path]) -> None:
+        """Set the file path."""
+        self._selected_path = path
+        self._path_var.set(str(path) if path else "")
+
+    def get_path(self) -> Optional[Path]:
+        """Get the selected file path."""
+        return self._selected_path
+
+    def clear(self) -> None:
+        """Clear the selected path."""
+        self.set_path(None)
+
+
+class FolderPicker(ctk.CTkFrame):
+    """
+    Folder picker component with entry field and browse button.
+
+    Displays selected folder path and opens folder dialog when browse button is clicked.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        label: str,
+        entry_width: int = 200,
+        on_folder_selected: Optional[Callable[[Path], None]] = None,
+    ):
+        super().__init__(parent, fg_color="transparent")
+        self._label_text = label
+        self._on_folder_selected = on_folder_selected
+        self._selected_path: Optional[Path] = None
+
+        # Label
+        if label:
+            label_widget = ctk.CTkLabel(
+                self,
+                text=label,
+                font=ctk.CTkFont(size=13),
+                text_color=ThemeColors.SUBTITLE,
+            )
+            label_widget.pack(anchor="w")
+
+        # Entry and button frame
+        picker_frame = ctk.CTkFrame(self, fg_color="transparent")
+        picker_frame.pack(anchor="w", pady=(5, 0), fill="x")
+
+        self._path_var = ctk.StringVar(value="")
+        self._entry = ctk.CTkEntry(
+            picker_frame,
+            width=entry_width,
+            textvariable=self._path_var,
+            state="readonly",
+            placeholder_text="No folder selected",
+        )
+        self._entry.pack(side="left")
+
+        self._browse_button = ctk.CTkButton(
+            picker_frame,
+            text="Browse",
+            width=70,
+            command=self._open_folder_dialog,
+        )
+        self._browse_button.pack(side="left", padx=(10, 0))
+
+    def _open_folder_dialog(self) -> None:
+        """Open folder selection dialog."""
+        from tkinter import filedialog
+
+        folder_path = filedialog.askdirectory(
+            title=f"Select {self._label_text}",
+        )
+
+        if folder_path:
+            path = Path(folder_path)
+            self.set_path(path)
+
+            if self._on_folder_selected:
+                self._on_folder_selected(path)
+
+    def set_path(self, path: Optional[Path]) -> None:
+        """Set the folder path."""
+        self._selected_path = path
+        self._path_var.set(str(path) if path else "")
+
+    def get_path(self) -> Optional[Path]:
+        """Get the selected folder path."""
+        return self._selected_path
+
+    def clear(self) -> None:
+        """Clear the selected path."""
+        self.set_path(None)
+
+
+class SummaryPanel(ctk.CTkFrame):
+    """
+    Summary information panel with title and content label.
+
+    Used for displaying read-only summary information in a consistent format.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        title: str,
+        width: int = 200,
+    ):
+        super().__init__(
+            parent,
+            fg_color=ThemeColors.HEADER_BG,
+            corner_radius=8,
+            width=width,
+        )
+        self.pack_propagate(False)
+
+        self._content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self._content_frame.pack(padx=15, pady=15, fill="both", expand=True)
+
+        self._title = SectionTitle(self._content_frame, text=title)
+        self._title.pack(anchor="w")
+
+        self._content_label = ctk.CTkLabel(
+            self._content_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=ThemeColors.LABEL,
+            justify="left",
+        )
+        self._content_label.pack(anchor="w", pady=(5, 0))
+
+    def set_content(self, text: str) -> None:
+        """Update the content text."""
+        self._content_label.configure(text=text)
+
+    def get_content_label(self) -> ctk.CTkLabel:
+        """Get the content label for direct access."""
+        return self._content_label

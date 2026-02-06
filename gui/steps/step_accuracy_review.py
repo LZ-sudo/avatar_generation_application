@@ -9,7 +9,12 @@ import customtkinter as ctk
 from typing import Callable, Optional
 
 from ..app_state import AppState
-from ..components.ui_elements import ThemeColors, PageHeader, ActionButton
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    ActionButton,
+    Card,
+)
 
 
 class MeasurementRow(ctk.CTkFrame):
@@ -142,17 +147,10 @@ class StepAccuracyReview(ctk.CTkFrame):
         header.pack(pady=(0, 10))
 
         # Main content panel - centered with content-fitting width
-        main_panel = ctk.CTkFrame(
-            content_frame,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
+        main_panel = Card(content_frame)
         main_panel.pack(pady=10)
 
-        panel_content = ctk.CTkFrame(main_panel, fg_color="transparent")
-        panel_content.pack(padx=20, pady=15)
+        panel_content = main_panel.content
 
         # Summary section
         self._summary_frame = ctk.CTkFrame(panel_content, fg_color="transparent")

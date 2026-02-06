@@ -5,12 +5,17 @@ Allows the user to configure output directory and export format options.
 """
 
 import customtkinter as ctk
-from tkinter import filedialog
 from pathlib import Path
 from typing import Optional, Callable
 
 from ..app_state import AppState
-from ..components.ui_elements import ThemeColors, PageHeader, SectionTitle
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    SectionHeader,
+    Card,
+    FolderPicker,
+)
 
 
 class StepOutputSettings(ctk.CTkFrame):
@@ -73,54 +78,25 @@ class StepOutputSettings(ctk.CTkFrame):
 
     def _create_output_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the output options panel."""
-        panel = ctk.CTkFrame(
-            parent,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
+        panel = Card(parent)
 
-        content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20)
+        content = panel.content
 
-        title = SectionTitle(content, text="Output Settings", font_size=16)
-        title.pack(anchor="w")
-
-        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
-        separator.pack(fill="x", pady=(10, 15))
+        header = SectionHeader(content, text="Output Settings", font_size=16)
+        header.pack(anchor="w", fill="x")
 
         # Output Directory
-        dir_label = ctk.CTkLabel(
+        self._folder_picker = FolderPicker(
             content,
-            text="Output Directory",
-            font=ctk.CTkFont(size=13),
-            text_color=ThemeColors.SUBTITLE,
+            label="Output Directory",
+            entry_width=380,
+            on_folder_selected=self._on_folder_selected,
         )
-        dir_label.pack(anchor="w")
+        self._folder_picker.pack(anchor="w", fill="x", pady=(0, 15))
 
-        dir_frame = ctk.CTkFrame(content, fg_color="transparent")
-        dir_frame.pack(anchor="w", pady=(5, 15), fill="x")
-
-        self._dir_var = ctk.StringVar(
-            value=str(self.app_state.output_settings.output_directory) if self.app_state.output_settings.output_directory else ""
-        )
-        self._dir_entry = ctk.CTkEntry(
-            dir_frame,
-            width=380,
-            textvariable=self._dir_var,
-            state="disabled",
-            placeholder_text="Click 'Browse' to select output folder",
-        )
-        self._dir_entry.pack(side="left")
-
-        browse_button = ctk.CTkButton(
-            dir_frame,
-            text="Browse",
-            width=80,
-            command=self._open_folder_picker,
-        )
-        browse_button.pack(side="left", padx=(10, 0))
+        # Set initial folder if it exists
+        if self.app_state.output_settings.output_directory:
+            self._folder_picker.set_path(self.app_state.output_settings.output_directory)
 
         # Output Filename
         filename_label = ctk.CTkLabel(
@@ -155,18 +131,12 @@ class StepOutputSettings(ctk.CTkFrame):
 
         return panel
 
-    def _open_folder_picker(self) -> None:
-        """Open folder picker dialog."""
-        folder_path = filedialog.askdirectory(
-            title="Select Output Directory",
-        )
-
-        if folder_path:
-            self.app_state.output_settings.output_directory = Path(folder_path)
-            self._dir_var.set(folder_path)
-            self._update_validation()
-            self._update_generate_button()
-            self.app_state.notify_change()
+    def _on_folder_selected(self, folder_path: Path) -> None:
+        """Handle folder selection."""
+        self.app_state.output_settings.output_directory = folder_path
+        self._update_validation()
+        self._update_generate_button()
+        self.app_state.notify_change()
 
     def _on_filename_change(self, *args) -> None:
         """Handle filename change."""

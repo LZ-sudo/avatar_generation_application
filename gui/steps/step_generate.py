@@ -10,12 +10,15 @@ import threading
 import subprocess
 import sys
 
-from PIL import Image
-
 from ..app_state import AppState
 from ..components.progress_display import ProgressDisplay
 from ..backend_interface import BackendInterface
-from ..components.ui_elements import ThemeColors, PageHeader, SectionTitle
+from ..components.ui_elements import (
+    PageHeader,
+    SectionTitle,
+    SummaryPanel,
+    ImagePreview,
+)
 
 
 class StepGenerate(ctk.CTkFrame):
@@ -59,14 +62,11 @@ class StepGenerate(ctk.CTkFrame):
         preview_title = SectionTitle(self._preview_frame, text="Preview", font_size=16)
         preview_title.pack(pady=(0, 10))
 
-        self._preview_label = ctk.CTkLabel(
+        self._preview_label = ImagePreview(
             self._preview_frame,
-            text="Preview will appear here after generation",
             width=300,
             height=300,
-            fg_color=ThemeColors.PREVIEW_BG,
-            corner_radius=10,
-            text_color=ThemeColors.SUBTITLE,
+            placeholder_text="Preview will appear here after generation",
         )
         self._preview_label.pack()
 
@@ -92,74 +92,17 @@ class StepGenerate(ctk.CTkFrame):
         """Create the settings summary panel."""
         frame = ctk.CTkFrame(parent, fg_color="transparent")
 
-        measurements_panel = ctk.CTkFrame(
-            frame,
-            fg_color=ThemeColors.HEADER_BG,
-            corner_radius=8,
-            width=200,
-        )
-        measurements_panel.pack(side="left", padx=10, fill="y")
-        measurements_panel.pack_propagate(False)
+        # Measurements panel
+        self._measurements_panel = SummaryPanel(frame, title="Measurements", width=200)
+        self._measurements_panel.pack(side="left", padx=10, fill="y")
 
-        measurements_content = ctk.CTkFrame(measurements_panel, fg_color="transparent")
-        measurements_content.pack(padx=15, pady=15, fill="both", expand=True)
+        # Configuration panel
+        self._config_panel = SummaryPanel(frame, title="Configuration", width=200)
+        self._config_panel.pack(side="left", padx=10, fill="y")
 
-        SectionTitle(measurements_content, text="Measurements").pack(anchor="w")
-
-        self._summary_measurements = ctk.CTkLabel(
-            measurements_content,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.LABEL,
-            justify="left",
-        )
-        self._summary_measurements.pack(anchor="w", pady=(5, 0))
-
-        config_panel = ctk.CTkFrame(
-            frame,
-            fg_color=ThemeColors.HEADER_BG,
-            corner_radius=8,
-            width=200,
-        )
-        config_panel.pack(side="left", padx=10, fill="y")
-        config_panel.pack_propagate(False)
-
-        config_content = ctk.CTkFrame(config_panel, fg_color="transparent")
-        config_content.pack(padx=15, pady=15, fill="both", expand=True)
-
-        SectionTitle(config_content, text="Configuration").pack(anchor="w")
-
-        self._summary_config = ctk.CTkLabel(
-            config_content,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.LABEL,
-            justify="left",
-        )
-        self._summary_config.pack(anchor="w", pady=(5, 0))
-
-        output_panel = ctk.CTkFrame(
-            frame,
-            fg_color=ThemeColors.HEADER_BG,
-            corner_radius=8,
-            width=200,
-        )
-        output_panel.pack(side="left", padx=10, fill="y")
-        output_panel.pack_propagate(False)
-
-        output_content = ctk.CTkFrame(output_panel, fg_color="transparent")
-        output_content.pack(padx=15, pady=15, fill="both", expand=True)
-
-        SectionTitle(output_content, text="Output").pack(anchor="w")
-
-        self._summary_output = ctk.CTkLabel(
-            output_content,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.LABEL,
-            justify="left",
-        )
-        self._summary_output.pack(anchor="w", pady=(5, 0))
+        # Output panel
+        self._output_panel = SummaryPanel(frame, title="Output", width=200)
+        self._output_panel.pack(side="left", padx=10, fill="y")
 
         return frame
 
@@ -189,7 +132,7 @@ class StepGenerate(ctk.CTkFrame):
             )
         else:
             measurements_text = "Not extracted"
-        self._summary_measurements.configure(text=measurements_text)
+        self._measurements_panel.set_content(measurements_text)
 
         c = self.app_state.configure
         hair_display = c.hair_asset if c.hair_asset else "None"
@@ -200,7 +143,7 @@ class StepGenerate(ctk.CTkFrame):
             f"FK/IK Hybrid: Enabled\n"
             f"Export Pose: T-Pose"
         )
-        self._summary_config.configure(text=config_text)
+        self._config_panel.set_content(config_text)
 
         o = self.app_state.output_settings
         output_text = (
@@ -208,7 +151,7 @@ class StepGenerate(ctk.CTkFrame):
             f"Filename: {o.output_filename}.fbx\n"
             f"Format: FBX"
         )
-        self._summary_output.configure(text=output_text)
+        self._output_panel.set_content(output_text)
 
     def _start_generation(self) -> None:
         """Start the avatar generation process."""
@@ -271,22 +214,7 @@ class StepGenerate(ctk.CTkFrame):
 
     def _show_preview(self, image_path: Path) -> None:
         """Display preview image."""
-        try:
-            pil_image = Image.open(image_path)
-            pil_image.thumbnail((300, 300), Image.Resampling.LANCZOS)
-
-            ctk_image = ctk.CTkImage(
-                light_image=pil_image,
-                dark_image=pil_image,
-                size=(pil_image.width, pil_image.height),
-            )
-
-            self._preview_label.configure(image=ctk_image, text="")
-            self._preview_label._image = ctk_image
-
-        except Exception:
-            self._preview_label.configure(text="Preview unavailable")
-
+        self._preview_label.load_image(image_path)
         self._preview_frame.pack(pady=20)
 
     def _open_output_folder(self) -> None:

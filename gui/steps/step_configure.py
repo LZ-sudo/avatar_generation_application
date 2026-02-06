@@ -6,11 +6,16 @@ Allows the user to configure avatar generation options.
 
 import customtkinter as ctk
 from pathlib import Path
-from tkinter import filedialog
-from PIL import Image as PILImage
 
 from ..app_state import AppState, RigType, InstrumentedArm
-from ..components.ui_elements import ThemeColors, PageHeader, SectionTitle
+from ..components.ui_elements import (
+    ThemeColors,
+    PageHeader,
+    SectionHeader,
+    Card,
+    ImagePreview,
+    FilePicker,
+)
 
 
 class StepConfigure(ctk.CTkFrame):
@@ -34,7 +39,6 @@ class StepConfigure(ctk.CTkFrame):
     def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
-        self._current_preview_image = None
         self._hair_assets = self._load_hair_assets()
         self._build()
 
@@ -114,22 +118,12 @@ class StepConfigure(ctk.CTkFrame):
 
     def _create_avatar_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the avatar options panel."""
-        panel = ctk.CTkFrame(
-            parent,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
+        panel = Card(parent)
 
-        content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20)
+        content = panel.content
 
-        title = SectionTitle(content, text="Avatar Settings", font_size=16)
-        title.pack(anchor="w")
-
-        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
-        separator.pack(fill="x", pady=(10, 15))
+        header = SectionHeader(content, text="Avatar Settings", font_size=16)
+        header.pack(anchor="w", fill="x")
 
         # Rig Type
         rig_label = ctk.CTkLabel(
@@ -208,62 +202,32 @@ class StepConfigure(ctk.CTkFrame):
         self._hair_dropdown.pack(anchor="w", pady=(5, 15))
 
         # C3D File Upload (Placeholder for future functionality)
-        c3d_label = ctk.CTkLabel(
+        self._c3d_picker = FilePicker(
             content,
-            text="C3D Motion Capture File (Optional)",
-            font=ctk.CTkFont(size=13),
-            text_color=ThemeColors.SUBTITLE,
+            label="C3D Motion Capture File (Optional)",
+            filetypes=[("C3D files", "*.c3d"), ("All files", "*.*")],
+            entry_width=170,
+            on_file_selected=self._on_c3d_selected,
         )
-        c3d_label.pack(anchor="w")
-
-        c3d_frame = ctk.CTkFrame(content, fg_color="transparent")
-        c3d_frame.pack(anchor="w", pady=(5, 0), fill="x")
-
-        self._c3d_var = ctk.StringVar(value="")
-        self._c3d_entry = ctk.CTkEntry(
-            c3d_frame,
-            width=170,
-            textvariable=self._c3d_var,
-            state="disabled",
-            placeholder_text="No file selected",
-        )
-        self._c3d_entry.pack(side="left")
-
-        c3d_button = ctk.CTkButton(
-            c3d_frame,
-            text="Browse",
-            width=70,
-            command=self._open_c3d_picker,
-        )
-        c3d_button.pack(side="left", padx=(10, 0))
+        self._c3d_picker.pack(anchor="w", fill="x")
 
         return panel
 
     def _create_hair_preview(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the hair preview panel."""
-        panel = ctk.CTkFrame(
-            parent,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
+        panel = Card(parent)
 
-        content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(padx=20, pady=20)
+        content = panel.content
 
-        title = SectionTitle(content, text="Hair Preview", font_size=16)
-        title.pack(anchor="w")
+        header = SectionHeader(content, text="Hair Preview", font_size=16)
+        header.pack(anchor="w", fill="x")
 
-        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
-        separator.pack(fill="x", pady=(10, 15))
-
-        # Preview label
-        self._preview_label = ctk.CTkLabel(
+        # Preview
+        self._preview_label = ImagePreview(
             content,
-            text="",
             width=330,
             height=330,
+            placeholder_text="No preview available",
         )
         self._preview_label.pack()
 
@@ -277,42 +241,11 @@ class StepConfigure(ctk.CTkFrame):
         hair_asset = self.app_state.configure.hair_asset
 
         if hair_asset is None:
-            self._preview_label.configure(
-                text="No preview available",
-                image=None,
-            )
-            self._current_preview_image = None
+            self._preview_label.clear()
             return
 
         image_path = self._get_preview_image_path(hair_asset)
-
-        if image_path is None or not image_path.exists():
-            self._preview_label.configure(
-                text="Preview image not found",
-                image=None,
-            )
-            self._current_preview_image = None
-            return
-
-        try:
-            pil_image = PILImage.open(image_path)
-            pil_image.thumbnail((330, 330), PILImage.Resampling.LANCZOS)
-            ctk_image = ctk.CTkImage(
-                light_image=pil_image,
-                dark_image=pil_image,
-                size=pil_image.size
-            )
-            self._current_preview_image = ctk_image
-            self._preview_label.configure(
-                text="",
-                image=ctk_image,
-            )
-        except Exception as e:
-            self._preview_label.configure(
-                text=f"Error loading preview:\n{str(e)}",
-                image=None,
-            )
-            self._current_preview_image = None
+        self._preview_label.load_image(image_path)
 
     def _on_rig_change(self, value: str) -> None:
         """Handle rig type change."""
@@ -336,16 +269,10 @@ class StepConfigure(ctk.CTkFrame):
         self._update_preview()
         self.app_state.notify_change()
 
-    def _open_c3d_picker(self) -> None:
-        """Open C3D file picker dialog (placeholder for future functionality)."""
-        file_path = filedialog.askopenfilename(
-            title="Select C3D Motion Capture File",
-            filetypes=[("C3D files", "*.c3d"), ("All files", "*.*")],
-        )
-
-        if file_path:
-            self._c3d_var.set(file_path)
-            # TODO: Store C3D file path in app state when functionality is implemented
+    def _on_c3d_selected(self, file_path: Path) -> None:
+        """Handle C3D file selection (placeholder for future functionality)."""
+        # TODO: Store C3D file path in app state when functionality is implemented
+        pass
 
     def validate(self) -> bool:
         """Validate the step is complete."""
