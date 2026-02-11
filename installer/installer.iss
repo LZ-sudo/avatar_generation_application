@@ -63,13 +63,15 @@ begin
     Exit;
   end;
 
-  // Check that Python is installed and accessible
-  if not Exec(ExpandConstant('{cmd}'), '/C python --version', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+  // Check that Python 3.11-3.13 is installed and accessible
+  if not Exec(ExpandConstant('{cmd}'),
+       '/C python -c "import sys; exit(0 if (3,11) <= sys.version_info[:2] <= (3,13) else 1)"',
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
      or (ResultCode <> 0) then
   begin
     MsgBox(
-      'Python is not installed or not found in PATH.' + #13#10 +
-      'Please install Python 3.11 from https://www.python.org/downloads/ and try again.',
+      'Python 3.11, 3.12, or 3.13 is required but was not found.' + #13#10 +
+      'Please install a supported version from https://www.python.org/downloads/ and try again.',
       mbError, MB_OK
     );
     Result := False;
