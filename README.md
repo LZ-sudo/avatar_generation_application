@@ -19,8 +19,7 @@ avatar_generation_application/
 |
 |-- user_configurations/            # Camera calibration and ArUco marker settings
 |-- installer/                      # Windows installer build files (developer use)
-|   |-- installer.nsi               # NSIS installer script
-|   `-- AvatarGeneratorApplication.bat  # Application launcher (compile to .exe before building)
+|   `-- installer.nsi               # NSIS installer script
 |-- requirements.txt                # GUI dependencies
 |-- setup.bat                       # Windows setup script
 `-- setup.sh                        # Linux / macOS setup script
@@ -78,12 +77,10 @@ A self-contained Windows setup executable can be compiled from the files in `ins
 
 **Requirements (developer machine only):**
 - [NSIS](https://nsis.sourceforge.io/Download) — Nullsoft Scriptable Install System (zlib/libpng licence, free for commercial use)
-- [Bat To Exe Converter](https://bat-to-exe-converter.en.softonic.com/) — to compile the launcher batch file
 
 **Steps:**
-1. Compile `installer/AvatarGeneratorApplication.bat` to `AvatarGeneratorApplication.exe` using Bat To Exe Converter and place the `.exe` in the `installer/` folder.
-2. Right-click `installer/installer.nsi` and select **Compile NSIS Script** (or run `makensis installer.nsi`).
-3. The compiled `AvatarGeneratorSetup.exe` will appear in the `installer/` folder.
+1. Right-click `installer/installer.nsi` and select **Compile NSIS Script** (or run `makensis installer.nsi`).
+2. The compiled `AvatarGeneratorSetup.exe` will appear in the `installer/` folder.
 
 End users run `AvatarGeneratorSetup.exe` once. The installer checks for Git, Python, and Blender before proceeding.
 

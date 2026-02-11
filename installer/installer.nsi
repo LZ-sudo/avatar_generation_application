@@ -4,13 +4,10 @@
 ; https://nsis.sourceforge.io -- zlib/libpng licence, free for commercial use
 ;
 ; HOW TO BUILD:
-;   1. Convert AvatarGeneratorApplication.bat to AvatarGeneratorApplication.exe
-;      using Bat To Exe Converter (free): https://bat-to-exe-converter.en.softonic.com/
-;      Place the resulting .exe in this installer/ folder.
-;   2. Download and install NSIS: https://nsis.sourceforge.io/Download
-;   3. Right-click this file and select "Compile NSIS Script", or run:
+;   1. Download and install NSIS: https://nsis.sourceforge.io/Download
+;   2. Right-click this file and select "Compile NSIS Script", or run:
 ;         makensis installer.nsi
-;   4. The compiled AvatarGeneratorSetup.exe will appear in this folder.
+;   3. The compiled AvatarGeneratorSetup.exe will appear in this folder.
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -93,9 +90,6 @@ Section "Install"
 
   SetOutPath "$INSTDIR"
 
-  ; Install the launcher executable
-  File "AvatarGeneratorApplication.exe"
-
   ; Clone the repository with all submodules
   DetailPrint "Cloning repository (this may take several minutes)..."
   nsExec::ExecToLog 'cmd /C git clone --recurse-submodules https://github.com/LZ-sudo/avatar_generation_application.git "$INSTDIR\avatar_generation_application"'
@@ -113,12 +107,12 @@ Section "Install"
     MessageBox MB_OK|MB_ICONEXCLAMATION "Dependency setup failed.$\r$\nThe application may not run correctly. Please re-run the installer."
   ${EndIf}
 
-  ; Create desktop shortcut
-  CreateShortcut "$DESKTOP\Avatar Generator.lnk" "$INSTDIR\AvatarGeneratorApplication.exe"
+  ; Create desktop shortcut pointing directly to the virtual environment's pythonw.exe
+  CreateShortcut "$DESKTOP\Avatar Generator.lnk" "$INSTDIR\avatar_generation_application\.venv\Scripts\pythonw.exe" "-m gui.main" "" 0 SW_SHOWNORMAL "" "Avatar Generation Application" "$INSTDIR\avatar_generation_application"
 
   ; Create start menu shortcuts
   CreateDirectory "$SMPROGRAMS\Avatar Generator"
-  CreateShortcut "$SMPROGRAMS\Avatar Generator\Avatar Generator.lnk" "$INSTDIR\AvatarGeneratorApplication.exe"
+  CreateShortcut "$SMPROGRAMS\Avatar Generator\Avatar Generator.lnk" "$INSTDIR\avatar_generation_application\.venv\Scripts\pythonw.exe" "-m gui.main" "" 0 SW_SHOWNORMAL "" "Avatar Generation Application" "$INSTDIR\avatar_generation_application"
 
   ; Save install directory to registry
   WriteRegStr HKCU "Software\SUTD_Group_37\AvatarGenerator" "InstallDir" "$INSTDIR"
