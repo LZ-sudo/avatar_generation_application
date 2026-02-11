@@ -7,7 +7,7 @@ Allows the user to configure avatar generation options.
 import customtkinter as ctk
 from pathlib import Path
 
-from ..app_state import AppState, RigType, InstrumentedArm
+from ..app_state import AppState, RigType
 from typing import Callable, Optional
 from ..components.ui_elements import (
     ThemeColors,
@@ -27,14 +27,8 @@ class StepConfigure(ctk.CTkFrame):
     """
 
     RIG_OPTIONS = {
-        "Default": RigType.DEFAULT.value,
         "Default (No Toes)": RigType.DEFAULT_NO_TOES.value,
-        "Game Engine": RigType.GAME_ENGINE.value,
-    }
-
-    INSTRUMENTED_ARM_OPTIONS = {
-        "Left": InstrumentedArm.LEFT.value,
-        "Right": InstrumentedArm.RIGHT.value,
+        "CMU MB": RigType.CMU_MB.value,
     }
 
     def __init__(
@@ -159,7 +153,7 @@ class StepConfigure(ctk.CTkFrame):
         rig_values = list(self.RIG_OPTIONS.keys())
         current_rig = next(
             (k for k, v in self.RIG_OPTIONS.items() if v == self.app_state.configure.rig_type.value),
-            rig_values[1]  # Default to "Default (No Toes)"
+            "CMU MB"
         )
 
         self._rig_var = ctk.StringVar(value=current_rig)
@@ -171,31 +165,6 @@ class StepConfigure(ctk.CTkFrame):
             command=self._on_rig_change,
         )
         self._rig_dropdown.pack(anchor="w", pady=(5, 15))
-
-        # Instrumented Arm
-        arm_label = ctk.CTkLabel(
-            content,
-            text="Instrumented Arm",
-            font=ctk.CTkFont(size=13),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        arm_label.pack(anchor="w")
-
-        arm_values = list(self.INSTRUMENTED_ARM_OPTIONS.keys())
-        current_arm = next(
-            (k for k, v in self.INSTRUMENTED_ARM_OPTIONS.items() if v == self.app_state.configure.instrumented_arm.value),
-            arm_values[0]
-        )
-
-        self._arm_var = ctk.StringVar(value=current_arm)
-        self._arm_dropdown = ctk.CTkOptionMenu(
-            content,
-            width=250,
-            values=arm_values,
-            variable=self._arm_var,
-            command=self._on_arm_change,
-        )
-        self._arm_dropdown.pack(anchor="w", pady=(5, 15))
 
         # Hair Asset
         hair_label = ctk.CTkLabel(
@@ -223,15 +192,15 @@ class StepConfigure(ctk.CTkFrame):
         )
         self._hair_dropdown.pack(anchor="w", pady=(5, 15))
 
-        # C3D File Upload (Placeholder for future functionality)
-        self._c3d_picker = FilePicker(
+        # BVH Animation File
+        self._bvh_picker = FilePicker(
             content,
-            label="C3D Motion Capture File (Optional)",
-            filetypes=[("C3D files", "*.c3d"), ("All files", "*.*")],
+            label="BVH Animation File (Optional)",
+            filetypes=[("BVH files", "*.bvh"), ("All files", "*.*")],
             entry_width=170,
-            on_file_selected=self._on_c3d_selected,
+            on_file_selected=self._on_bvh_selected,
         )
-        self._c3d_picker.pack(anchor="w", fill="x")
+        self._bvh_picker.pack(anchor="w", fill="x")
 
         return panel
 
@@ -275,12 +244,6 @@ class StepConfigure(ctk.CTkFrame):
         self.app_state.configure.rig_type = RigType(rig_value)
         self.app_state.notify_change()
 
-    def _on_arm_change(self, value: str) -> None:
-        """Handle instrumented arm change."""
-        arm_value = self.INSTRUMENTED_ARM_OPTIONS[value]
-        self.app_state.configure.instrumented_arm = InstrumentedArm(arm_value)
-        self.app_state.notify_change()
-
     def _on_hair_change(self, value: str) -> None:
         """Handle hair asset change."""
         hair_asset = next(
@@ -291,10 +254,10 @@ class StepConfigure(ctk.CTkFrame):
         self._update_preview()
         self.app_state.notify_change()
 
-    def _on_c3d_selected(self, file_path: Path) -> None:
-        """Handle C3D file selection (placeholder for future functionality)."""
-        # TODO: Store C3D file path in app state when functionality is implemented
-        pass
+    def _on_bvh_selected(self, file_path: Path) -> None:
+        """Handle BVH animation file selection."""
+        self.app_state.configure.bvh_animation_path = file_path
+        self.app_state.notify_change()
 
     def _on_next_click(self) -> None:
         """Handle next button click."""

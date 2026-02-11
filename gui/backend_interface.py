@@ -272,7 +272,6 @@ class RealBackendInterface(BackendInterface):
             "--",
             "--config", str(mesh_parameters_path),
             "--rig-type", config["rig_type"],
-            "--instrumented-arm", config["instrumented_arm"],
             "--output-dir", str(output_dir),
         ]
 
@@ -282,6 +281,10 @@ class RealBackendInterface(BackendInterface):
 
         if config.get("t_pose"):
             cmd.append("--t-pose")
+
+        # Add BVH animation file if specified
+        if config.get("bvh_animation_path"):
+            cmd.extend(["--animation", str(config["bvh_animation_path"])])
 
         # Add hair asset if specified
         if config.get("hair_asset"):

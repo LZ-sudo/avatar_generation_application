@@ -28,9 +28,8 @@ class WizardStep(Enum):
 
 class RigType(Enum):
     """Available rig types for avatar generation."""
-    DEFAULT = "default"
     DEFAULT_NO_TOES = "default_no_toes"
-    GAME_ENGINE = "game_engine"
+    CMU_MB = "cmu_mb"
 
 
 class HairStyle(Enum):
@@ -40,12 +39,6 @@ class HairStyle(Enum):
     MEDIUM = "medium"
     LONG = "long"
     CUSTOM = "custom"
-
-
-class InstrumentedArm(Enum):
-    """Which arm has IMU sensors attached."""
-    LEFT = "left"
-    RIGHT = "right"
 
 
 @dataclass
@@ -287,11 +280,11 @@ class MeasurementsState:
 @dataclass
 class ConfigureState:
     """State for Step 4: Avatar Configuration."""
-    rig_type: RigType = RigType.DEFAULT_NO_TOES
+    rig_type: RigType = RigType.CMU_MB
     fk_ik_hybrid: bool = False
-    instrumented_arm: InstrumentedArm = InstrumentedArm.LEFT
     hair_asset: Optional[str] = None  # Name of hair asset from mpfb_hair_assets folder
     t_pose: bool = True
+    bvh_animation_path: Optional[Path] = None
 
     def is_complete(self) -> bool:
         """Check if configuration is valid."""

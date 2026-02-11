@@ -136,10 +136,11 @@ class StepGenerate(ctk.CTkFrame):
 
         c = self.app_state.configure
         hair_display = c.hair_asset if c.hair_asset else "None"
+        bvh_display = c.bvh_animation_path.name if c.bvh_animation_path else "None"
         config_text = (
             f"Rig: {c.rig_type.value}\n"
-            f"Instrumented Arm: {c.instrumented_arm.value.capitalize()}\n"
             f"Hair Asset: {hair_display}\n"
+            f"BVH Animation: {bvh_display}\n"
             f"FK/IK Hybrid: Enabled\n"
             f"Export Pose: T-Pose"
         )
@@ -176,9 +177,9 @@ class StepGenerate(ctk.CTkFrame):
                 config={
                     "rig_type": self.app_state.configure.rig_type.value,
                     "fk_ik_hybrid": self.app_state.configure.fk_ik_hybrid,
-                    "instrumented_arm": self.app_state.configure.instrumented_arm.value,
                     "hair_asset": self.app_state.configure.hair_asset,
                     "t_pose": self.app_state.configure.t_pose,
+                    "bvh_animation_path": self.app_state.configure.bvh_animation_path,
                     "output_directory": str(self.app_state.output_settings.output_directory),
                     "output_filename": self.app_state.output_settings.output_filename,
                     "export_fbx": self.app_state.output_settings.export_fbx,
