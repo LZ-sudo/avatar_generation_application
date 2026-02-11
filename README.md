@@ -27,9 +27,16 @@ avatar_generation_application/
 
 ### Prerequisites
 
-- Python 3.11 (For Blender API support)
-- Git
-- Blender 5.0.1 (required by `mesh_generation_module`)
+1. **Blender 5.0.1** - Download from [blender.org](https://www.blender.org/download/)
+2. **MPFB2 Addon** - Install from Blender Extensions:
+   - Open Blender → Edit → Preferences → Extensions
+   - Search for "MPFB" and click Install
+   - Restart Blender
+3. **retarget_bvh Addon** *(Required for BVH animation baking)* - Download from [Diffeomorphic/retarget_bvh](https://bitbucket.org/Diffeomorphic/retarget_bvh/downloads/) (GNU GPL v2+):
+   - Download the 2026-01-30 `.zip` release
+   - Open Blender → Edit → Preferences → Add-ons → Install from Disk
+   - Select the downloaded zip and enable the addon
+4. **Python 3.11** (Required for Blender API compatibility)
 
 ### Installation
 
