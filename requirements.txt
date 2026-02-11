@@ -1,7 +1,10 @@
 # Avatar Generator Application - GUI Requirements
 
 # CustomTkinter framework for GUI
-flet>=0.21.0
+customtkinter==5.2.2
+darkdetect==0.8.0
+packaging==25.0
+pillow==12.1.0
 
 # Note: The submodules (measurements_extraction_module, mesh_generation_module)
 # have their own requirements.txt files with separate dependencies.

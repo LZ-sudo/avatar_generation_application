@@ -87,7 +87,7 @@ echo === Setup Complete ===
 echo.
 echo Virtual environments created:
 echo   - .venv (main application)
-echo   - measurements_extraction_module\.venv
-echo   - mesh_generation_module\.venv
+echo   - measurements_extraction_module\venv
+echo   - mesh_generation_module\myenv
 
 endlocal

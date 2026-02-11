@@ -25,7 +25,7 @@ if [ ! -d "venv" ]; then
 else
     echo "Virtual environment already exists."
 fi
-source venv/Scripts/activate 2>/dev/null || source .venv/bin/activate
+source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 deactivate
@@ -41,7 +41,7 @@ if [ ! -d "myenv" ]; then
 else
     echo "Virtual environment already exists."
 fi
-source myenv/Scripts/activate 2>/dev/null || source .venv/bin/activate
+source myenv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 deactivate
@@ -68,5 +68,5 @@ echo "=== Setup Complete ==="
 echo ""
 echo "Virtual environments created:"
 echo "  - .venv (main application)"
-echo "  - measurements_extraction_module/.venv"
-echo "  - mesh_generation_module/.venv"
+echo "  - measurements_extraction_module/venv"
+echo "  - mesh_generation_module/myenv"
