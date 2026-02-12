@@ -59,7 +59,7 @@ class ArucoSettingsState:
 
     def get_config_dir(self) -> Path:
         """Get the user_configurations directory path."""
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         return project_root / "user_configurations"
 
     def get_config_path(self) -> Path:
@@ -158,7 +158,7 @@ class CameraCalibrationState:
 
     def get_output_path(self) -> Path:
         """Get the calibration output path (absolute path)."""
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         return project_root / "user_configurations" / "calibration.json"
 
     def load_existing_calibration(self) -> None:

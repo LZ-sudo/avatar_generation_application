@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Callable
 import subprocess
 import json
+import sys
+
+# Suppress console windows for subprocess calls on Windows
+_SUBPROCESS_FLAGS = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
 
 class BackendInterface(ABC):
@@ -145,7 +149,7 @@ class RealBackendInterface(BackendInterface):
         Runs the complete_measurements.py script using the submodule's venv Python.
         After extraction, appends gender and race to the measurements.json file.
         """
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         module_path = project_root / "measurements_extraction_module"
         script_path = module_path / "complete_measurements.py"
         venv_python = module_path / "venv" / "Scripts" / "python.exe"
@@ -180,6 +184,7 @@ class RealBackendInterface(BackendInterface):
             capture_output=True,
             text=True,
             cwd=str(module_path),
+            **_SUBPROCESS_FLAGS,
         )
 
         if result.returncode != 0:
@@ -227,7 +232,7 @@ class RealBackendInterface(BackendInterface):
 
         Runs generate_human.py in Blender with the specified configuration.
         """
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         module_path = project_root / "mesh_generation_module"
 
         # Get mesh_parameters.json path (created by compute_all_parameters.py)
@@ -264,9 +269,16 @@ class RealBackendInterface(BackendInterface):
 
         # Build command using run_blender.py wrapper
         run_blender_script = module_path / "run_blender.py"
+        myenv_python = module_path / "myenv" / "Scripts" / "python.exe"
+
+        if not myenv_python.exists():
+            raise RuntimeError(
+                f"Virtual environment Python not found at {myenv_python}. "
+                "Please set up the mesh_generation_module myenv."
+            )
 
         cmd = [
-            "python",
+            str(myenv_python),
             str(run_blender_script),
             "--script", "generate_human.py",
             "--",
@@ -300,6 +312,7 @@ class RealBackendInterface(BackendInterface):
             text=True,
             cwd=str(module_path),
             timeout=600,  # 10 minute timeout
+            **_SUBPROCESS_FLAGS,
         )
 
         if result.returncode != 0:
@@ -372,7 +385,7 @@ class RealBackendInterface(BackendInterface):
             )
 
         # Open file in Blender GUI (non-blocking)
-        subprocess.Popen([blender_exe, str(file_path)])
+        subprocess.Popen([blender_exe, str(file_path)], **_SUBPROCESS_FLAGS)
 
     def calibrate_camera(
         self,
@@ -386,7 +399,7 @@ class RealBackendInterface(BackendInterface):
 
         Runs the calibrate_camera.py script using the submodule's venv Python.
         """
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         module_path = project_root / "measurements_extraction_module"
         script_path = module_path / "calibrate_camera.py"
         venv_python = module_path / "venv" / "Scripts" / "python.exe"
@@ -416,6 +429,7 @@ class RealBackendInterface(BackendInterface):
             capture_output=True,
             text=True,
             cwd=str(module_path),
+            **_SUBPROCESS_FLAGS,
         )
 
         if result.returncode != 0:
@@ -443,9 +457,16 @@ class RealBackendInterface(BackendInterface):
 
         Runs compute_all_parameters.py to infer macroparameters and adjust microparameters.
         """
-        project_root = Path(__file__).parent.parent
+        project_root = Path(__file__).resolve().parent.parent
         module_path = project_root / "mesh_generation_module"
         script_path = module_path / "compute_all_parameters.py"
+        myenv_python = module_path / "myenv" / "Scripts" / "python.exe"
+
+        if not myenv_python.exists():
+            raise RuntimeError(
+                f"Virtual environment Python not found at {myenv_python}. "
+                "Please set up the mesh_generation_module myenv."
+            )
 
         # Read measurements to get gender and race
         with open(measurements_path) as f:
@@ -472,7 +493,7 @@ class RealBackendInterface(BackendInterface):
         output_report = intermediates_dir / "parameters_report.json"
 
         cmd = [
-            "python",
+            str(myenv_python),
             str(script_path),
             "--input", str(measurements_path),
             "--models", str(weights_path),
@@ -486,6 +507,7 @@ class RealBackendInterface(BackendInterface):
             text=True,
             cwd=str(module_path),
             timeout=600,  # 10 minute timeout
+            **_SUBPROCESS_FLAGS,
         )
 
         if result.returncode != 0:
