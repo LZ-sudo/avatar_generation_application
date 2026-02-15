@@ -274,7 +274,8 @@ class StepMeasurements(ctk.CTkFrame):
             result = self.backend.compute_mesh_parameters(measurements_path)
             self.after(0, lambda: self._on_computation_complete(result))
         except Exception as e:
-            self.after(0, lambda: self._on_computation_error(str(e)))
+            error_msg = str(e)
+            self.after(0, lambda: self._on_computation_error(error_msg))
 
     def _on_computation_complete(self, result: dict) -> None:
         """Handle computation completion on main thread."""

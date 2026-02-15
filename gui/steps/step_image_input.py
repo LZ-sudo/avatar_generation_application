@@ -392,7 +392,8 @@ class StepImageInput(ctk.CTkFrame):
             )
             self.after(0, lambda: self._on_extraction_complete(result))
         except Exception as e:
-            self.after(0, lambda: self._on_extraction_error(str(e)))
+            error_msg = str(e)
+            self.after(0, lambda: self._on_extraction_error(error_msg))
 
     def _on_extraction_complete(self, result: dict) -> None:
         """Handle extraction completion on main thread."""
