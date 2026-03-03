@@ -19,7 +19,9 @@ avatar_generation_application/
 |
 |-- user_configurations/            # Camera calibration and ArUco marker settings
 |-- installer/                      # Windows installer build files (developer use)
-|   `-- installer.nsi               # NSIS installer script
+|   |-- installer.nsi               # NSIS installer script
+|   |-- launcher.py                 # Launcher source (compiled to exe before building installer)
+|   `-- AvatarGeneratorApplication.exe  # Pre-compiled launcher (bundled into the installer)
 |-- requirements.txt                # GUI dependencies
 |-- setup.bat                       # Windows setup script
 `-- setup.sh                        # Linux / macOS setup script
@@ -77,12 +79,29 @@ A self-contained Windows setup executable can be compiled from the files in `ins
 
 **Requirements (developer machine only):**
 - [NSIS](https://nsis.sourceforge.io/Download) — Nullsoft Scriptable Install System (zlib/libpng licence, free for commercial use)
+- PyInstaller (included in `requirements.txt`, installed by `setup.bat`)
 
 **Steps:**
-1. Right-click `installer/installer.nsi` and select **Compile NSIS Script** (or run `makensis installer.nsi`).
-2. The compiled `AvatarGeneratorSetup.exe` will appear in the `installer/` folder.
 
-End users run `AvatarGeneratorSetup.exe` once. The installer checks for Git, Python, and Blender before proceeding.
+1. Ensure the root virtual environment is set up (`setup.bat` or manual install of `requirements.txt`).
+
+2. Pre-compile the launcher executable. Run the following from the repository root:
+
+```bat
+.venv\Scripts\pyinstaller.exe --onefile --noconsole --name AvatarGeneratorApplication --distpath installer --workpath installer\_pyi_build --specpath installer\_pyi_build installer\launcher.py
+```
+
+This produces `installer\AvatarGeneratorApplication.exe`. The `installer\_pyi_build\` folder can be deleted afterwards.
+
+3. Compile the installer. Right-click `installer/installer.nsi` and select **Compile NSIS Script**, or run from within the `installer/` folder:
+
+```bat
+makensis installer.nsi
+```
+
+4. The compiled `AvatarGeneratorSetup.exe` will appear in the `installer/` folder.
+
+End users run `AvatarGeneratorSetup.exe` once. The installer checks for Git, Python, and Blender before proceeding, then clones the repository and sets up all virtual environments.
 
 ## Running the Application
 
@@ -127,7 +146,7 @@ python -m gui.main
 - [easyViTPose](https://github.com/JunkyByte/easy_ViTPose) - High-accuracy pose estimation
 - [ViTPose Paper](https://arxiv.org/abs/2204.12484) - Vision Transformer for Generic Body Pose Estimation
 - [Head-Detection-Yolov8](https://github.com/Owen718/Head-Detection-Yolov8) - YOLOv8 head detection model trained on CrowdHuman dataset
-- [Mediapipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker/python)
-- [OpenCV ArUco Marker Detection](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
-- [Camera Calibration with OpenCV](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html)
-- [Perspective Transformation (Homography)](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html)
+- [Mediapipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker/python) - Mediapipe pose detection for head width estimation (Matches well with MPFB2 mesh riggings)
+- [OpenCV ArUco Marker Detection](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html) - OpenCV ArUco for background calibration, alignment with real world measurements and extraction of image-to-measurement metric
+- [Camera Calibration with OpenCV](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html) - OpenCV camera calibration to address lens distortion in modern cameras
+- [Perspective Transformation (Homography)](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html) - OpenCV perspective transformation for perspective correction, addressing slight tilts in pictures taken

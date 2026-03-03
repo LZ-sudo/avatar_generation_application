@@ -88,6 +88,9 @@ FunctionEnd
 ; ---------------------------------------------------------------------------
 Section "Install"
 
+  ; Declare estimated install size in KB (2.27 GB) for the directory page display
+  AddSize 2380268
+
   SetOutPath "$INSTDIR"
 
   ; Clone the repository with all submodules
@@ -99,7 +102,7 @@ Section "Install"
     Abort
   ${EndIf}
 
-  ; Run setup.bat to create virtual environments
+  ; Run setup.bat to create virtual environments and install dependencies
   DetailPrint "Setting up virtual environments (this may take several minutes)..."
   nsExec::ExecToLog 'cmd /C "$INSTDIR\avatar_generation_application\setup.bat"'
   Pop $0
@@ -107,25 +110,13 @@ Section "Install"
     MessageBox MB_OK|MB_ICONEXCLAMATION "Dependency setup failed.$\r$\nThe application may not run correctly. Please re-run the installer."
   ${EndIf}
 
-  ; Write a Python launcher script to the install directory.
-  ; It uses __file__ to locate itself at runtime, so paths are always correct
-  ; regardless of how or where the shortcut is invoked.
-  FileOpen $4 "$INSTDIR\AvatarGeneratorApplication.py" w
-  FileWrite $4 "import subprocess$\r$\n"
-  FileWrite $4 "from pathlib import Path$\r$\n"
-  FileWrite $4 "$\r$\n"
-  FileWrite $4 "install_dir = Path(__file__).resolve().parent$\r$\n"
-  FileWrite $4 "project_dir = install_dir / 'avatar_generation_application'$\r$\n"
-  FileWrite $4 "pythonw = project_dir / '.venv' / 'Scripts' / 'pythonw.exe'$\r$\n"
-  FileWrite $4 "subprocess.Popen([str(pythonw), '-m', 'gui.main'], cwd=str(project_dir))$\r$\n"
-  FileClose $4
+  ; Copy the pre-compiled launcher executable (built locally via PyInstaller)
+  File "AvatarGeneratorApplication.exe"
 
-  ; Create desktop shortcut: runs the launcher script via the venv's pythonw.exe (no console window)
-  CreateShortcut "$DESKTOP\Avatar Generator.lnk" "$INSTDIR\avatar_generation_application\.venv\Scripts\pythonw.exe" '"$INSTDIR\AvatarGeneratorApplication.py"'
-
-  ; Create start menu shortcuts
+  ; Create shortcuts
+  CreateShortcut "$DESKTOP\Avatar Generator.lnk" "$INSTDIR\AvatarGeneratorApplication.exe"
   CreateDirectory "$SMPROGRAMS\Avatar Generator"
-  CreateShortcut "$SMPROGRAMS\Avatar Generator\Avatar Generator.lnk" "$INSTDIR\avatar_generation_application\.venv\Scripts\pythonw.exe" '"$INSTDIR\AvatarGeneratorApplication.py"'
+  CreateShortcut "$SMPROGRAMS\Avatar Generator\Avatar Generator.lnk" "$INSTDIR\AvatarGeneratorApplication.exe"
 
   ; Save install directory to registry
   WriteRegStr HKCU "Software\SUTD_Group_37\AvatarGenerator" "InstallDir" "$INSTDIR"
