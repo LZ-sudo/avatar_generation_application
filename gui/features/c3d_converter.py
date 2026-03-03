@@ -149,6 +149,7 @@ class C3dConverterView(ctk.CTkFrame):
             width=80,
             textvariable=self._fps_var,
             justify="right",
+            state="disabled",
         )
         self._fps_entry.pack(side="left")
 
