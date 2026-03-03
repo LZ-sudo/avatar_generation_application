@@ -17,6 +17,7 @@ from ..components.ui_elements import (
     SummaryPanel,
     ImagePreview,
     OpenFolderButton,
+    ActionButton,
 )
 
 
@@ -74,12 +75,13 @@ class StepGenerate(ctk.CTkFrame):
         self._open_folder_button = OpenFolderButton(self._buttons_frame)
         self._open_folder_button.pack(side="left", padx=5)
 
-        self._close_button = ctk.CTkButton(
+        self._close_button = ActionButton(
             self._buttons_frame,
             text="Close Application",
             command=self._close_application,
             fg_color="#dc2626",
             hover_color="#b91c1c",
+            primary=False,
         )
         self._close_button.pack(side="left", padx=5)
 

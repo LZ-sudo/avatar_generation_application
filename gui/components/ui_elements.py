@@ -875,7 +875,7 @@ class SummaryPanel(ctk.CTkFrame):
         return self._content_label
 
 
-class OpenFolderButton(ctk.CTkButton):
+class OpenFolderButton(ActionButton):
     """
     Button that opens a configured directory in the system file explorer.
 
@@ -888,14 +888,13 @@ class OpenFolderButton(ctk.CTkButton):
         parent: ctk.CTkFrame,
         text: str = "Open Output Folder",
         height: int = 36,
-        **kwargs,
     ):
         super().__init__(
             parent,
             text=text,
             height=height,
             command=self._open_folder,
-            **kwargs,
+            primary=False,
         )
         self._folder_path: Optional[Path] = None
 

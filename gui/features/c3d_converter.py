@@ -20,6 +20,7 @@ from ..components.ui_elements import (
     FolderPicker,
     StatusLabel,
     OpenFolderButton,
+    ActionButton,
 )
 
 _SUBPROCESS_FLAGS = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
@@ -61,16 +62,15 @@ class C3dConverterView(ctk.CTkFrame):
         self._buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         self._buttons_frame.pack(pady=(20, 0))
 
-        self._convert_button = ctk.CTkButton(
+        self._convert_button = ActionButton(
             self._buttons_frame,
             text="Convert",
             command=self._on_convert_click,
             fg_color="#2563eb",
             hover_color="#1d4ed8",
             height=40,
-            font=ctk.CTkFont(size=14, weight="bold"),
-            state="disabled",
         )
+        self._convert_button.configure(state="disabled")
         self._convert_button.pack(side="left", padx=5)
 
         self._open_folder_button = OpenFolderButton(

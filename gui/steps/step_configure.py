@@ -16,6 +16,7 @@ from ..components.ui_elements import (
     Card,
     ImagePreview,
     FilePicker,
+    ActionButton,
 )
 
 
@@ -122,13 +123,12 @@ class StepConfigure(ctk.CTkFrame):
         preview_panel.pack(side="left", padx=15, anchor="n")
 
         # Next button (centered)
-        self._next_button = ctk.CTkButton(
+        self._next_button = ActionButton(
             content_frame,
             text="Next",
             command=self._on_next_click,
             width=200,
             height=40,
-            font=ctk.CTkFont(size=14, weight="bold"),
         )
         self._next_button.pack(pady=(30, 0))
 

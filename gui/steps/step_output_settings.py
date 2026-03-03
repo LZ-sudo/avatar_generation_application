@@ -15,6 +15,7 @@ from ..components.ui_elements import (
     SectionHeader,
     Card,
     FolderPicker,
+    ActionButton,
 )
 
 
@@ -64,14 +65,13 @@ class StepOutputSettings(ctk.CTkFrame):
         self._validation_label.pack(pady=(10, 0))
 
         # Generate Avatar button
-        self._generate_button = ctk.CTkButton(
+        self._generate_button = ActionButton(
             content_frame,
             text="Generate Avatar",
             command=self._on_generate_click,
             fg_color="#2563eb",
             hover_color="#1d4ed8",
             height=40,
-            font=ctk.CTkFont(size=14, weight="bold"),
         )
         self._generate_button.pack(pady=(20, 0))
         self._update_generate_button()
