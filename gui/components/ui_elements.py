@@ -842,12 +842,14 @@ class SummaryPanel(ctk.CTkFrame):
         parent: ctk.CTkFrame,
         title: str,
         width: int = 200,
+        height: int = 280,
     ):
         super().__init__(
             parent,
             fg_color=ThemeColors.HEADER_BG,
             corner_radius=8,
             width=width,
+            height=height,
         )
         self.pack_propagate(False)
 
@@ -863,8 +865,10 @@ class SummaryPanel(ctk.CTkFrame):
             font=ctk.CTkFont(size=12),
             text_color=ThemeColors.LABEL,
             justify="left",
+            wraplength=width - 30,
+            anchor="nw",
         )
-        self._content_label.pack(anchor="w", pady=(5, 0))
+        self._content_label.pack(anchor="nw", pady=(5, 0))
 
     def set_content(self, text: str) -> None:
         """Update the content text."""

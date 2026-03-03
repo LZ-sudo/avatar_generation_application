@@ -174,7 +174,7 @@ class StepImageInput(ctk.CTkFrame):
         )
         self._gender_dropdown.pack(anchor="w", fill="x", pady=(0, 6))
 
-        # Race selection
+        # Race selection (fixed to Asian; Caucasian weights not trained)
         self._race_dropdown = LabeledDropdown(
             details_content,
             label="Race",
@@ -184,6 +184,9 @@ class StepImageInput(ctk.CTkFrame):
             on_change=self._on_race_change,
         )
         self._race_dropdown.pack(anchor="w", fill="x", pady=(0, 6))
+        self._race_dropdown.set_value("Asian")
+        self._race_dropdown.set_enabled(False)
+        self.app_state.image_input.race = "asian"
 
         # Height input
         height_frame = ctk.CTkFrame(details_content, fg_color="transparent")
@@ -275,8 +278,6 @@ class StepImageInput(ctk.CTkFrame):
             self._front_picker.set_image(self.app_state.image_input.front_image_path)
         if self.app_state.image_input.gender:
             self._gender_dropdown.set_value(self.app_state.image_input.gender.capitalize())
-        if self.app_state.image_input.race:
-            self._race_dropdown.set_value(self.app_state.image_input.race.capitalize())
         if self.app_state.image_input.height_cm:
             self._height_var.set(str(self.app_state.image_input.height_cm))
 
@@ -339,8 +340,6 @@ class StepImageInput(ctk.CTkFrame):
             missing.append("front view image")
         if not state.gender:
             missing.append("gender")
-        if not state.race:
-            missing.append("race")
         if not state.height_cm:
             missing.append("subject height")
         if not state.camera_calibration_valid:
@@ -370,7 +369,6 @@ class StepImageInput(ctk.CTkFrame):
         # Disable all input fields during processing
         self._front_picker.set_enabled(False)
         self._gender_dropdown.set_enabled(False)
-        self._race_dropdown.set_enabled(False)
         self._height_entry.configure(state="disabled")
         self._extract_button.start_processing("Extracting Measurements...")
         self._status_label.set_info("Extracting measurements...")
@@ -402,7 +400,6 @@ class StepImageInput(ctk.CTkFrame):
         # Re-enable all input fields
         self._front_picker.set_enabled(True)
         self._gender_dropdown.set_enabled(True)
-        self._race_dropdown.set_enabled(True)
         self._height_entry.configure(state="normal")
 
         # Update measurements state
@@ -441,7 +438,6 @@ class StepImageInput(ctk.CTkFrame):
         # Re-enable all input fields
         self._front_picker.set_enabled(True)
         self._gender_dropdown.set_enabled(True)
-        self._race_dropdown.set_enabled(True)
         self._height_entry.configure(state="normal")
 
         self._extract_button.stop_processing()

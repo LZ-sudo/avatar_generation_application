@@ -125,7 +125,7 @@ class ImagePicker(ctk.CTkFrame):
             frame,
             text="",
             width=self._width - 20,
-            height=self._height - 60,
+            height=self._height - 70,
         )
         self._image_label.pack(pady=(10, 5))
         self._image_label.bind("<Button-1>", self._open_file_picker)
@@ -145,7 +145,7 @@ class ImagePicker(ctk.CTkFrame):
             font=ctk.CTkFont(size=10, slant="italic"),
             text_color=self.COLORS["text_hint"],
         )
-        hint_label.pack()
+        hint_label.pack(pady=(0, 8))
         hint_label.bind("<Button-1>", self._open_file_picker)
 
         frame.bind("<Button-1>", self._open_file_picker)
@@ -176,7 +176,7 @@ class ImagePicker(ctk.CTkFrame):
             pil_image = Image.open(path)
 
             max_width = self._width - 20
-            max_height = self._height - 60
+            max_height = self._height - 70
 
             pil_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
 

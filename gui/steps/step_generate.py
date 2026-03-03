@@ -90,15 +90,15 @@ class StepGenerate(ctk.CTkFrame):
         frame = ctk.CTkFrame(parent, fg_color="transparent")
 
         # Measurements panel
-        self._measurements_panel = SummaryPanel(frame, title="Measurements", width=200)
+        self._measurements_panel = SummaryPanel(frame, title="Measurements", width=250)
         self._measurements_panel.pack(side="left", padx=10, fill="y")
 
         # Configuration panel
-        self._config_panel = SummaryPanel(frame, title="Configuration", width=200)
+        self._config_panel = SummaryPanel(frame, title="Configuration", width=250)
         self._config_panel.pack(side="left", padx=10, fill="y")
 
         # Output panel
-        self._output_panel = SummaryPanel(frame, title="Output", width=200)
+        self._output_panel = SummaryPanel(frame, title="Output", width=250)
         self._output_panel.pack(side="left", padx=10, fill="y")
 
         return frame
