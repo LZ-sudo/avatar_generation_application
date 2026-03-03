@@ -7,8 +7,6 @@ Handles avatar generation and displays results with preview.
 import customtkinter as ctk
 from pathlib import Path
 import threading
-import subprocess
-import sys
 
 from ..app_state import AppState
 from ..components.progress_display import ProgressDisplay
@@ -18,6 +16,7 @@ from ..components.ui_elements import (
     SectionTitle,
     SummaryPanel,
     ImagePreview,
+    OpenFolderButton,
 )
 
 
@@ -72,11 +71,7 @@ class StepGenerate(ctk.CTkFrame):
 
         self._buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
 
-        self._open_folder_button = ctk.CTkButton(
-            self._buttons_frame,
-            text="Open Output Folder",
-            command=self._open_output_folder,
-        )
+        self._open_folder_button = OpenFolderButton(self._buttons_frame)
         self._open_folder_button.pack(side="left", padx=5)
 
         self._close_button = ctk.CTkButton(
@@ -206,6 +201,7 @@ class StepGenerate(ctk.CTkFrame):
         print("[DEBUG] _on_generation_complete called")
         self.app_state.generate.is_generating = False
         self._progress_display.set_complete("Avatar generated successfully!")
+        self._open_folder_button.set_path(self.app_state.output_settings.output_directory)
         self._buttons_frame.pack(pady=20)
 
         if self.app_state.generate.preview_images:
@@ -224,16 +220,6 @@ class StepGenerate(ctk.CTkFrame):
         """Display preview image."""
         self._preview_label.load_image(image_path)
         self._preview_frame.pack(pady=20)
-
-    def _open_output_folder(self) -> None:
-        """Open the output folder in file explorer."""
-        if self.app_state.output_settings.output_directory:
-            if sys.platform == "win32":
-                subprocess.run(["explorer", str(self.app_state.output_settings.output_directory)])
-            elif sys.platform == "darwin":
-                subprocess.run(["open", str(self.app_state.output_settings.output_directory)])
-            else:
-                subprocess.run(["xdg-open", str(self.app_state.output_settings.output_directory)])
 
     def _close_application(self) -> None:
         """Close the application."""

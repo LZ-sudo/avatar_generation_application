@@ -120,6 +120,7 @@ python -m gui.main
 ### Motion Capture Data
 - [CMU Graphics Lab Motion Capture Database](https://mocap.cs.cmu.edu) - Motion capture animations
 - [cmubvh](https://github.com/Shriinivas/cmubvh) - CMU mocap data converted to BVH format for use with retarget_bvh
+- [ezc3d](https://github.com/pyomeca/ezc3d) - C3D file reader/writer for Cometa and other motion capture systems
 
 ### Measurements Extraction Module
 

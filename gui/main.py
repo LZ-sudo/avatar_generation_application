@@ -14,6 +14,7 @@ from .backend_interface import get_backend
 from .features.camera_calibration import CameraCalibrationView
 from .features.aruco_settings import ArucoSettingsView
 from .features.avatar_generation import AvatarGenerationView
+from .features.c3d_converter import C3dConverterView
 
 
 class AvatarGeneratorApp(ctk.CTk):
@@ -23,6 +24,7 @@ class AvatarGeneratorApp(ctk.CTk):
     Provides tab-based navigation between features:
     - Camera Calibration
     - ArUco Settings
+    - C3D Converter
     - Avatar Generation
     """
 
@@ -71,6 +73,7 @@ class AvatarGeneratorApp(ctk.CTk):
 
         self._tabview.add("Camera Calibration")
         self._tabview.add("ArUco Settings")
+        self._tabview.add("C3D Converter")
         self._tabview.add("Avatar Generation")
 
         self._tabview.set("Avatar Generation")
@@ -89,6 +92,10 @@ class AvatarGeneratorApp(ctk.CTk):
             self.app_state,
         )
         self._aruco_settings.pack(expand=True, fill="both")
+
+        c3d_tab = self._tabview.tab("C3D Converter")
+        self._c3d_converter = C3dConverterView(c3d_tab)
+        self._c3d_converter.pack(expand=True, fill="both")
 
         generation_tab = self._tabview.tab("Avatar Generation")
         self._avatar_generation = AvatarGenerationView(

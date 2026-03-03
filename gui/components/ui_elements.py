@@ -5,6 +5,9 @@ This module provides common UI components used across wizard steps
 to ensure consistent styling and reduce code duplication.
 """
 
+import subprocess
+import sys
+
 import customtkinter as ctk
 from pathlib import Path
 from typing import Callable, Optional
@@ -870,3 +873,42 @@ class SummaryPanel(ctk.CTkFrame):
     def get_content_label(self) -> ctk.CTkLabel:
         """Get the content label for direct access."""
         return self._content_label
+
+
+class OpenFolderButton(ctk.CTkButton):
+    """
+    Button that opens a configured directory in the system file explorer.
+
+    Cross-platform: uses explorer on Windows, open on macOS, xdg-open on Linux.
+    Call set_path() to configure the directory before the button becomes active.
+    """
+
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        text: str = "Open Output Folder",
+        height: int = 36,
+        **kwargs,
+    ):
+        super().__init__(
+            parent,
+            text=text,
+            height=height,
+            command=self._open_folder,
+            **kwargs,
+        )
+        self._folder_path: Optional[Path] = None
+
+    def set_path(self, path: Optional[Path]) -> None:
+        """Set the folder path to open when the button is clicked."""
+        self._folder_path = path
+
+    def _open_folder(self) -> None:
+        """Open the folder in the system file explorer."""
+        if self._folder_path and self._folder_path.exists():
+            if sys.platform == "win32":
+                subprocess.run(["explorer", str(self._folder_path)])
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(self._folder_path)])
+            else:
+                subprocess.run(["xdg-open", str(self._folder_path)])
