@@ -77,6 +77,7 @@ class AvatarGeneratorApp(ctk.CTk):
         self._tabview.add("Avatar Generation")
 
         self._tabview.set("Avatar Generation")
+        self._tabview.configure(command=self._on_tab_change)
 
         calibration_tab = self._tabview.tab("Camera Calibration")
         self._camera_calibration = CameraCalibrationView(
@@ -104,6 +105,12 @@ class AvatarGeneratorApp(ctk.CTk):
             self.backend,
         )
         self._avatar_generation.pack(expand=True, fill="both")
+
+
+    def _on_tab_change(self) -> None:
+        """Refresh the active wizard step when switching back to Avatar Generation."""
+        if self._tabview.get() == "Avatar Generation":
+            self._avatar_generation.on_tab_enter()
 
 
 def main():

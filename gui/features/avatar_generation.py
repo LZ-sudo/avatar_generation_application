@@ -134,6 +134,12 @@ class AvatarGenerationView(ctk.CTkFrame):
         if self.app_state.go_to_step(step):
             self._show_step(step)
 
+    def on_tab_enter(self) -> None:
+        """Called when the Avatar Generation tab becomes active."""
+        current_step = self.steps.get(self.app_state.current_step)
+        if current_step and hasattr(current_step, "on_enter"):
+            current_step.on_enter()
+
     def _start_generation(self) -> None:
         """Start generation by navigating to GENERATE step."""
         if self.app_state.go_next():
