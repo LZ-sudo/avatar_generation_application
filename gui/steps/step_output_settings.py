@@ -129,6 +129,17 @@ class StepOutputSettings(ctk.CTkFrame):
         )
         extension_label.pack(side="left", padx=(5, 0))
 
+        # Apply Clothing checkbox
+        self._clothing_var = ctk.BooleanVar(value=self.app_state.output_settings.apply_clothing)
+        clothing_checkbox = ctk.CTkCheckBox(
+            content,
+            text="Apply scrubs clothing (Scrub_Shirt, Scrub_Pants)",
+            variable=self._clothing_var,
+            command=self._on_clothing_toggle,
+            font=ctk.CTkFont(size=13),
+        )
+        clothing_checkbox.pack(anchor="w", pady=(10, 0))
+
         return panel
 
     def _on_folder_selected(self, folder_path: Path) -> None:
@@ -136,6 +147,11 @@ class StepOutputSettings(ctk.CTkFrame):
         self.app_state.output_settings.output_directory = folder_path
         self._update_validation()
         self._update_generate_button()
+        self.app_state.notify_change()
+
+    def _on_clothing_toggle(self) -> None:
+        """Handle clothing checkbox toggle."""
+        self.app_state.output_settings.apply_clothing = self._clothing_var.get()
         self.app_state.notify_change()
 
     def _on_filename_change(self, *args) -> None:

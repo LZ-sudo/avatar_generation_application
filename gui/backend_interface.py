@@ -302,6 +302,10 @@ class RealBackendInterface(BackendInterface):
         if config.get("hair_asset"):
             cmd.extend(["--hair", config["hair_asset"]])
 
+        # Add clothing assets if enabled
+        if config.get("apply_clothing"):
+            cmd.extend(["--clothing", "Scrub_Pants", "Scrub_Shirt"])
+
         if progress_callback:
             progress_callback(0.2, "Running Blender script...")
 

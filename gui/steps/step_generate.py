@@ -181,6 +181,7 @@ class StepGenerate(ctk.CTkFrame):
                     "output_filename": self.app_state.output_settings.output_filename,
                     "export_fbx": self.app_state.output_settings.export_fbx,
                     "export_obj": self.app_state.output_settings.export_obj,
+                    "apply_clothing": self.app_state.output_settings.apply_clothing,
                 },
                 progress_callback=progress_callback,
             )
