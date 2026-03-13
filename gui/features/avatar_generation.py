@@ -5,6 +5,7 @@ Wraps the existing wizard flow for avatar generation.
 """
 
 import customtkinter as ctk
+from typing import Callable, Optional
 
 from ..app_state import AppState, WizardStep
 from ..backend_interface import BackendInterface
@@ -29,10 +30,17 @@ class AvatarGenerationView(ctk.CTkFrame):
         "divider": "#e5e7eb",
     }
 
-    def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        app_state: AppState,
+        backend: BackendInterface,
+        set_tabs_locked: Optional[Callable[[bool], None]] = None,
+    ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
+        self._set_tabs_locked = set_tabs_locked
 
         self._create_steps()
         self._build()
@@ -49,12 +57,14 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.app_state,
                 self.backend,
                 on_navigate_next=self._go_next,
+                set_tabs_locked=self._set_tabs_locked,
             ),
             WizardStep.MEASUREMENTS: StepMeasurements(
                 self._step_container,
                 self.app_state,
                 self.backend,
                 on_navigate_next=self._go_next,
+                set_tabs_locked=self._set_tabs_locked,
             ),
             WizardStep.ACCURACY_REVIEW: StepAccuracyReview(
                 self._step_container,
@@ -71,7 +81,12 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.app_state,
                 on_generate=self._start_generation,
             ),
-            WizardStep.GENERATE: StepGenerate(self._step_container, self.app_state, self.backend),
+            WizardStep.GENERATE: StepGenerate(
+                self._step_container,
+                self.app_state,
+                self.backend,
+                set_tabs_locked=self._set_tabs_locked,
+            ),
         }
 
     def _build(self) -> None:

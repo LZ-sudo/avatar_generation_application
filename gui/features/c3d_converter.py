@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
+from typing import Callable, Optional
 
 import customtkinter as ctk
 
@@ -34,8 +35,13 @@ class C3dConverterView(ctk.CTkFrame):
     using the c3d_to_bvh.py script in the mesh_rigging_animation module.
     """
 
-    def __init__(self, parent: ctk.CTkFrame):
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        set_tabs_locked: Optional[Callable[[bool], None]] = None,
+    ):
         super().__init__(parent, fg_color="transparent")
+        self._set_tabs_locked = set_tabs_locked
         self._is_converting = False
         self._build()
 
@@ -223,6 +229,8 @@ class C3dConverterView(ctk.CTkFrame):
         output_path = output_dir / f"{filename}.bvh"
 
         self._is_converting = True
+        if self._set_tabs_locked:
+            self._set_tabs_locked(True)
         self._convert_button.configure(state="disabled", text="Converting...")
         self._log_output.reset()
         self._log_output.append_line("Starting conversion...")
@@ -298,6 +306,8 @@ class C3dConverterView(ctk.CTkFrame):
     def _on_conversion_complete(self, output_path: Path) -> None:
         """Handle conversion completion."""
         self._is_converting = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self._open_folder_button.set_path(output_path.parent)
         self._open_folder_button.pack(side="left", padx=5, before=self._convert_button)
         self._convert_button.configure(text="Convert Again")
@@ -307,6 +317,8 @@ class C3dConverterView(ctk.CTkFrame):
     def _on_conversion_error(self, error: str) -> None:
         """Handle conversion error."""
         self._is_converting = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self._convert_button.configure(text="Convert")
         self._update_convert_button()
         self._log_output.set_error(f"Error: {error}")

@@ -104,11 +104,13 @@ class StepImageInput(ctk.CTkFrame):
         app_state: AppState,
         backend: BackendInterface,
         on_navigate_next: Optional[Callable[[], None]] = None,
+        set_tabs_locked: Optional[Callable[[bool], None]] = None,
     ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
         self.on_navigate_next = on_navigate_next
+        self._set_tabs_locked = set_tabs_locked
         self._extraction_complete = False
         self._build()
         self._update_config_status()
@@ -365,6 +367,8 @@ class StepImageInput(ctk.CTkFrame):
 
     def _extract_measurements(self) -> None:
         """Start the measurement extraction process."""
+        if self._set_tabs_locked:
+            self._set_tabs_locked(True)
         self.app_state.image_input.is_extracting = True
         # Disable all input fields during processing
         self._front_picker.set_enabled(False)
@@ -396,6 +400,8 @@ class StepImageInput(ctk.CTkFrame):
     def _on_extraction_complete(self, result: dict) -> None:
         """Handle extraction completion on main thread."""
         self.app_state.image_input.is_extracting = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self.app_state.image_input.extraction_error = None
         # Re-enable all input fields
         self._front_picker.set_enabled(True)
@@ -434,6 +440,8 @@ class StepImageInput(ctk.CTkFrame):
     def _on_extraction_error(self, error_message: str) -> None:
         """Handle extraction error on main thread."""
         self.app_state.image_input.is_extracting = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self.app_state.image_input.extraction_error = error_message
         # Re-enable all input fields
         self._front_picker.set_enabled(True)

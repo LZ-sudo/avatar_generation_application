@@ -95,7 +95,10 @@ class AvatarGeneratorApp(ctk.CTk):
         self._aruco_settings.pack(expand=True, fill="both")
 
         c3d_tab = self._tabview.tab("C3D Converter")
-        self._c3d_converter = C3dConverterView(c3d_tab)
+        self._c3d_converter = C3dConverterView(
+            c3d_tab,
+            set_tabs_locked=self.set_tabs_locked,
+        )
         self._c3d_converter.pack(expand=True, fill="both")
 
         generation_tab = self._tabview.tab("Avatar Generation")
@@ -103,9 +106,14 @@ class AvatarGeneratorApp(ctk.CTk):
             generation_tab,
             self.app_state,
             self.backend,
+            set_tabs_locked=self.set_tabs_locked,
         )
         self._avatar_generation.pack(expand=True, fill="both")
 
+    def set_tabs_locked(self, locked: bool) -> None:
+        """Disable or enable tab switching during script execution."""
+        state = "disabled" if locked else "normal"
+        self._tabview._segmented_button.configure(state=state)
 
     def _on_tab_change(self) -> None:
         """Refresh the active wizard step when switching back to Avatar Generation."""

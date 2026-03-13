@@ -7,6 +7,7 @@ Handles avatar generation and displays results with preview.
 import customtkinter as ctk
 from pathlib import Path
 import threading
+from typing import Callable, Optional
 
 from ..app_state import AppState
 from ..components.log_output import LogOutput
@@ -28,10 +29,17 @@ class StepGenerate(ctk.CTkFrame):
     Triggers avatar generation and displays progress and results.
     """
 
-    def __init__(self, parent: ctk.CTkFrame, app_state: AppState, backend: BackendInterface):
+    def __init__(
+        self,
+        parent: ctk.CTkFrame,
+        app_state: AppState,
+        backend: BackendInterface,
+        set_tabs_locked: Optional[Callable[[bool], None]] = None,
+    ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
+        self._set_tabs_locked = set_tabs_locked
         self._build()
 
     def _build(self) -> None:
@@ -153,6 +161,8 @@ class StepGenerate(ctk.CTkFrame):
 
     def _start_generation(self) -> None:
         """Start the avatar generation process."""
+        if self._set_tabs_locked:
+            self._set_tabs_locked(True)
         self._log_output.reset()
         self.app_state.generate.is_generating = True
 
@@ -200,6 +210,8 @@ class StepGenerate(ctk.CTkFrame):
         """Handle generation completion."""
         print("[DEBUG] _on_generation_complete called")
         self.app_state.generate.is_generating = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self._log_output.set_complete("Avatar generated successfully!")
         self._open_folder_button.set_path(self.app_state.output_settings.output_directory)
         self._buttons_frame.pack(pady=20)
@@ -213,6 +225,8 @@ class StepGenerate(ctk.CTkFrame):
         """Handle generation error."""
         print(f"[DEBUG] _on_generation_error called with: {error}")
         self.app_state.generate.is_generating = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self.app_state.generate.error_message = error
         self._log_output.set_error(f"Error: {error}")
 

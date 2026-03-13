@@ -40,11 +40,13 @@ class StepMeasurements(ctk.CTkFrame):
         app_state: AppState,
         backend: BackendInterface,
         on_navigate_next: Callable[[], None] = None,
+        set_tabs_locked: Optional[Callable[[bool], None]] = None,
     ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
         self.on_navigate_next = on_navigate_next
+        self._set_tabs_locked = set_tabs_locked
         self._fields: dict[str, LabeledInputField] = {}
         self._computation_complete = False
         self._build()
@@ -253,6 +255,8 @@ class StepMeasurements(ctk.CTkFrame):
 
     def _compute_parameters(self) -> None:
         """Start the mesh parameter computation process."""
+        if self._set_tabs_locked:
+            self._set_tabs_locked(True)
         self.app_state.measurements.is_computing_parameters = True
         self.app_state.measurements.parameters_error = None
         # Disable all input fields during processing
@@ -280,6 +284,8 @@ class StepMeasurements(ctk.CTkFrame):
     def _on_computation_complete(self, result: dict) -> None:
         """Handle computation completion on main thread."""
         self.app_state.measurements.is_computing_parameters = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self.app_state.measurements.parameters_computed = True
         self.app_state.measurements.parameters_report = result
         self.app_state.measurements.parameters_error = None
@@ -317,6 +323,8 @@ class StepMeasurements(ctk.CTkFrame):
     def _on_computation_error(self, error_message: str) -> None:
         """Handle computation error on main thread."""
         self.app_state.measurements.is_computing_parameters = False
+        if self._set_tabs_locked:
+            self._set_tabs_locked(False)
         self.app_state.measurements.parameters_error = error_message
         # Re-enable all input fields
         for field in self._fields.values():
