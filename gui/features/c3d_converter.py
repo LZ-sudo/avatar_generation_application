@@ -4,6 +4,7 @@ C3D Converter Feature View
 Provides UI for converting Cometa C3D joint angle files to BVH animation format.
 """
 
+import os
 import subprocess
 import sys
 import threading
@@ -285,12 +286,12 @@ class C3dConverterView(ctk.CTkFrame):
                 stderr=subprocess.STDOUT,
                 text=True,
                 cwd=str(script_path.parent),
+                env={**os.environ, "PYTHONUNBUFFERED": "1"},
                 **_SUBPROCESS_FLAGS,
             )
 
-            for line in process.stdout:
-                stripped = line.rstrip("\n")
-                self.after(0, lambda l=stripped: self._log_output.append_line(l))
+            for line in iter(process.stdout.readline, ""):
+                self._log_output.feed_line(line.rstrip("\n"))
 
             process.wait()
 

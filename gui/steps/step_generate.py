@@ -172,7 +172,7 @@ class StepGenerate(ctk.CTkFrame):
     def _run_generation(self) -> None:
         """Run the generation process in a background thread."""
         def log_callback(line: str):
-            self.after(0, lambda l=line: self._log_output.append_line(l))
+            self._log_output.feed_line(line)
 
         try:
             print("[DEBUG] Starting generation...")

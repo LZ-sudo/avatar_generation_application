@@ -4,6 +4,7 @@ Backend interface for the Avatar Generator application.
 This module defines the interface between the GUI and the backend modules.
 """
 
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable
@@ -311,10 +312,11 @@ class RealBackendInterface(BackendInterface):
             stderr=subprocess.STDOUT,
             text=True,
             cwd=str(module_path),
+            env={**os.environ, "PYTHONUNBUFFERED": "1"},
             **_SUBPROCESS_FLAGS,
         )
 
-        for line in process.stdout:
+        for line in iter(process.stdout.readline, ""):
             stripped = line.rstrip("\n")
             if log_callback:
                 log_callback(stripped)
