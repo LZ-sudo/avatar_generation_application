@@ -18,10 +18,10 @@ from ..components.ui_elements import (
     Card,
     FilePicker,
     FolderPicker,
-    StatusLabel,
     OpenFolderButton,
     ActionButton,
 )
+from ..components.log_output import LogOutput
 
 _SUBPROCESS_FLAGS = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
 
@@ -56,8 +56,8 @@ class C3dConverterView(ctk.CTkFrame):
         panel = self._create_converter_panel(content_frame)
         panel.pack(pady=20)
 
-        self._status_label = StatusLabel(content_frame, text="")
-        self._status_label.pack(pady=(10, 0))
+        self._log_output = LogOutput(content_frame, width=480, height=75)
+        self._log_output.pack(pady=(10, 0))
 
         self._buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         self._buttons_frame.pack(pady=(20, 0))
@@ -191,14 +191,15 @@ class C3dConverterView(ctk.CTkFrame):
         try:
             fps = float(fps_text) if fps_text else 120.0
         except ValueError:
-            self._status_label.set_error("Invalid FPS value. Please enter a number.")
+            self._log_output.set_error("Invalid FPS value. Please enter a number.")
             return
 
         output_path = output_dir / f"{filename}.bvh"
 
         self._is_converting = True
         self._convert_button.configure(state="disabled", text="Converting...")
-        self._status_label.set_info("Converting...")
+        self._log_output.reset()
+        self._log_output.append_line("Starting conversion...")
 
         thread = threading.Thread(
             target=self._run_conversion,
@@ -237,23 +238,30 @@ class C3dConverterView(ctk.CTkFrame):
 
             cmd = [
                 str(python_path),
+                "-u",
                 str(script_path),
                 "-i", str(input_path),
                 "-o", str(output_path),
                 "--fps", str(fps),
             ]
 
-            result = subprocess.run(
+            process = subprocess.Popen(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
                 cwd=str(script_path.parent),
                 **_SUBPROCESS_FLAGS,
             )
 
-            if result.returncode != 0:
-                error_msg = result.stderr or result.stdout or "Unknown error"
-                raise RuntimeError(f"Conversion failed: {error_msg}")
+            for line in process.stdout:
+                stripped = line.rstrip("\n")
+                self.after(0, lambda l=stripped: self._log_output.append_line(l))
+
+            process.wait()
+
+            if process.returncode != 0:
+                raise RuntimeError(f"Conversion failed (exit code {process.returncode})")
 
             self.after(0, lambda: self._on_conversion_complete(output_path))
 
@@ -268,12 +276,12 @@ class C3dConverterView(ctk.CTkFrame):
         self._open_folder_button.pack(side="left", padx=5, before=self._convert_button)
         self._convert_button.configure(text="Convert Again")
         self._update_convert_button()
-        self._status_label.set_success(f"Saved: {output_path.name}")
+        self._log_output.set_complete(f"Saved: {output_path.name}")
 
     def _on_conversion_error(self, error: str) -> None:
         """Handle conversion error."""
         self._is_converting = False
         self._convert_button.configure(text="Convert")
         self._update_convert_button()
-        self._status_label.set_error(f"Error: {error}")
+        self._log_output.set_error(f"Error: {error}")
 

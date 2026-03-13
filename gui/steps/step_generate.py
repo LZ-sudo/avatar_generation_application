@@ -9,7 +9,7 @@ from pathlib import Path
 import threading
 
 from ..app_state import AppState
-from ..components.progress_display import ProgressDisplay
+from ..components.log_output import LogOutput
 from ..backend_interface import BackendInterface
 from ..components.ui_elements import (
     PageHeader,
@@ -54,8 +54,8 @@ class StepGenerate(ctk.CTkFrame):
 
         self._progress_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         self._progress_frame.pack(pady=20)
-        self._progress_display = ProgressDisplay(self._progress_frame, width=400)
-        self._progress_display.pack()
+        self._log_output = LogOutput(self._progress_frame, width=400, height=75)
+        self._log_output.pack()
 
         self._preview_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
 
@@ -153,7 +153,7 @@ class StepGenerate(ctk.CTkFrame):
 
     def _start_generation(self) -> None:
         """Start the avatar generation process."""
-        self._progress_display.reset()
+        self._log_output.reset()
         self.app_state.generate.is_generating = True
 
         thread = threading.Thread(target=self._run_generation, daemon=True)
@@ -161,11 +161,8 @@ class StepGenerate(ctk.CTkFrame):
 
     def _run_generation(self) -> None:
         """Run the generation process in a background thread."""
-        def progress_callback(progress: float, status: str):
-            print(f"[DEBUG] Progress callback: {progress*100:.0f}% - {status}")
-            self.after(0, lambda p=progress, s=status: self._progress_display.set_progress(p, s))
-            self.app_state.generate.progress = progress
-            self.app_state.generate.status_message = status
+        def log_callback(line: str):
+            self.after(0, lambda l=line: self._log_output.append_line(l))
 
         try:
             print("[DEBUG] Starting generation...")
@@ -183,7 +180,7 @@ class StepGenerate(ctk.CTkFrame):
                     "export_obj": self.app_state.output_settings.export_obj,
                     "apply_clothing": self.app_state.output_settings.apply_clothing,
                 },
-                progress_callback=progress_callback,
+                log_callback=log_callback,
             )
 
             print(f"[DEBUG] Generation complete, result: {result}")
@@ -203,7 +200,7 @@ class StepGenerate(ctk.CTkFrame):
         """Handle generation completion."""
         print("[DEBUG] _on_generation_complete called")
         self.app_state.generate.is_generating = False
-        self._progress_display.set_complete("Avatar generated successfully!")
+        self._log_output.set_complete("Avatar generated successfully!")
         self._open_folder_button.set_path(self.app_state.output_settings.output_directory)
         self._buttons_frame.pack(pady=20)
 
@@ -217,7 +214,7 @@ class StepGenerate(ctk.CTkFrame):
         print(f"[DEBUG] _on_generation_error called with: {error}")
         self.app_state.generate.is_generating = False
         self.app_state.generate.error_message = error
-        self._progress_display.set_error(f"Error: {error}")
+        self._log_output.set_error(f"Error: {error}")
 
     def _show_preview(self, image_path: Path) -> None:
         """Display preview image."""

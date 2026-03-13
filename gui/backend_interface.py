@@ -53,7 +53,7 @@ class BackendInterface(ABC):
         self,
         measurements: dict,
         config: dict,
-        progress_callback: Callable[[float, str], None] = None,
+        log_callback: Callable[[str], None] = None,
     ) -> dict:
         """
         Generate avatar mesh from measurements and configuration.
@@ -225,7 +225,7 @@ class RealBackendInterface(BackendInterface):
         self,
         measurements: dict,
         config: dict,
-        progress_callback: Callable[[float, str], None] = None,
+        log_callback: Callable[[str], None] = None,
     ) -> dict:
         """
         Generate avatar using the mesh_generation_module.
@@ -264,9 +264,6 @@ class RealBackendInterface(BackendInterface):
         output_dir = Path(config["output_directory"])
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        if progress_callback:
-            progress_callback(0.1, "Starting Blender...")
-
         # Build command using run_blender.py wrapper
         run_blender_script = module_path / "run_blender.py"
         myenv_python = module_path / "myenv" / "Scripts" / "python.exe"
@@ -279,6 +276,7 @@ class RealBackendInterface(BackendInterface):
 
         cmd = [
             str(myenv_python),
+            "-u",
             str(run_blender_script),
             "--script", "generate_human.py",
             "--",
@@ -306,25 +304,25 @@ class RealBackendInterface(BackendInterface):
         if config.get("apply_clothing"):
             cmd.extend(["--clothing", "Scrub_Pants", "Scrub_Shirt"])
 
-        if progress_callback:
-            progress_callback(0.2, "Running Blender script...")
-
-        # Run Blender via run_blender.py
-        result = subprocess.run(
+        # Run Blender via run_blender.py, streaming stdout line by line
+        process = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             cwd=str(module_path),
-            timeout=600,  # 10 minute timeout
             **_SUBPROCESS_FLAGS,
         )
 
-        if result.returncode != 0:
-            error_msg = result.stderr or result.stdout or "Unknown error"
-            raise RuntimeError(f"Avatar generation failed: {error_msg}")
+        for line in process.stdout:
+            stripped = line.rstrip("\n")
+            if log_callback:
+                log_callback(stripped)
 
-        if progress_callback:
-            progress_callback(0.9, "Finalizing...")
+        process.wait()
+
+        if process.returncode != 0:
+            raise RuntimeError(f"Avatar generation failed (exit code {process.returncode})")
 
         # Find output files
         output_filename = config["output_filename"]
@@ -342,9 +340,6 @@ class RealBackendInterface(BackendInterface):
                 obj_path = None  # Optional, don't fail if not found
 
         # Clean up intermediates directory after successful export
-        if progress_callback:
-            progress_callback(0.95, "Cleaning up temporary files...")
-
         try:
             import shutil
             if intermediates_dir.exists():
@@ -352,9 +347,6 @@ class RealBackendInterface(BackendInterface):
         except Exception as e:
             # Don't fail if cleanup fails
             print(f"Warning: Could not clean up intermediates directory: {e}")
-
-        if progress_callback:
-            progress_callback(1.0, "Complete!")
 
         return {
             "fbx_path": str(fbx_path) if fbx_path else None,
