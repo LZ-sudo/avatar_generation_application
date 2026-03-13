@@ -56,8 +56,16 @@ class C3dConverterView(ctk.CTkFrame):
         panel = self._create_converter_panel(content_frame)
         panel.pack(pady=20)
 
+        self._validation_label = ctk.CTkLabel(
+            content_frame,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=ThemeColors.WARNING,
+        )
+        self._validation_label.pack(pady=(0, 5))
+
         self._log_output = LogOutput(content_frame, width=480, height=75)
-        self._log_output.pack(pady=(10, 0))
+        self._log_output.pack(pady=(0, 0))
 
         self._buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         self._buttons_frame.pack(pady=(20, 0))
@@ -78,6 +86,8 @@ class C3dConverterView(ctk.CTkFrame):
             height=40,
         )
         # Shown only after a successful conversion
+
+        self._update_validation()
 
     def _create_converter_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the converter settings panel."""
@@ -166,11 +176,27 @@ class C3dConverterView(ctk.CTkFrame):
     def _on_input_selected(self, file_path: Path) -> None:
         """Handle input file selection. Auto-populates filename from input stem."""
         self._filename_var.set(file_path.stem)
+        self._update_validation()
         self._update_convert_button()
 
     def _on_folder_selected(self, folder_path: Path) -> None:
         """Handle output folder selection."""
+        self._update_validation()
         self._update_convert_button()
+
+    def _update_validation(self) -> None:
+        """Update the validation message for missing required inputs."""
+        input_path = self._input_picker.get_path()
+        output_dir = self._output_folder_picker.get_path()
+        missing = []
+        if not input_path:
+            missing.append("C3D input file")
+        if not output_dir:
+            missing.append("output directory")
+        if missing:
+            self._validation_label.configure(text=f"Missing: {', '.join(missing)}")
+        else:
+            self._validation_label.configure(text="")
 
     def _update_convert_button(self) -> None:
         """Enable convert button only when required inputs are set."""
