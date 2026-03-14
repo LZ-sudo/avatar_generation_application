@@ -9,6 +9,12 @@ Usage:
 
 import customtkinter as ctk
 
+try:
+    import pywinstyles
+    _PYWINSTYLES_AVAILABLE = True
+except ImportError:
+    _PYWINSTYLES_AVAILABLE = False
+
 from .app_state import AppState
 from .backend_interface import get_backend
 from .features.camera_calibration import CameraCalibrationView
@@ -42,6 +48,7 @@ class AvatarGeneratorApp(ctk.CTk):
 
         self._setup_window()
         self._build_ui()
+        self._fix_minimize_flicker()
 
     def _setup_window(self) -> None:
         """Configure window settings."""
@@ -54,10 +61,10 @@ class AvatarGeneratorApp(ctk.CTk):
 
     def _build_ui(self) -> None:
         """Build the main UI structure."""
-        header = ctk.CTkFrame(self, fg_color=self.COLORS["header_bg"])
-        header.pack(fill="x")
+        self._header = ctk.CTkFrame(self, fg_color=self.COLORS["header_bg"])
+        self._header.pack(fill="x")
 
-        header_content = ctk.CTkFrame(header, fg_color="transparent")
+        header_content = ctk.CTkFrame(self._header, fg_color="transparent")
         header_content.pack(pady=15)
 
         title_label = ctk.CTkLabel(
@@ -109,6 +116,20 @@ class AvatarGeneratorApp(ctk.CTk):
             set_tabs_locked=self.set_tabs_locked,
         )
         self._avatar_generation.pack(expand=True, fill="both")
+
+    def _fix_minimize_flicker(self) -> None:
+        """Apply pywinstyles opacity fix to prevent widget flickering on minimize/restore."""
+        if not _PYWINSTYLES_AVAILABLE:
+            return
+        for widget in [
+            self._header,
+            self._tabview,
+            self._camera_calibration,
+            self._aruco_settings,
+            self._c3d_converter,
+            self._avatar_generation,
+        ]:
+            pywinstyles.set_opacity(widget, value=1.0)
 
     def set_tabs_locked(self, locked: bool) -> None:
         """Disable or enable tab switching during script execution."""
