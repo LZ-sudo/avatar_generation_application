@@ -158,7 +158,7 @@ class C3dConverterView(ctk.CTkFrame):
         fps_label.pack(anchor="w")
 
         fps_frame = ctk.CTkFrame(content, fg_color="transparent")
-        fps_frame.pack(anchor="w", pady=(5, 0))
+        fps_frame.pack(anchor="w", pady=(5, 15))
 
         self._fps_var = ctk.StringVar(value="120")
         self._fps_entry = ctk.CTkEntry(
@@ -279,7 +279,6 @@ class C3dConverterView(ctk.CTkFrame):
                 "-o", str(output_path),
                 "--fps", str(fps),
             ]
-
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
