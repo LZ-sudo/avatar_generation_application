@@ -50,7 +50,7 @@ Function .onInit
   Pop $0
   Pop $1
   ${If} $0 != 0
-    MessageBox MB_OK|MB_ICONSTOP "Python 3.11, 3.12, or 3.13 is required but was not found.$\r$\nPlease install a supported version from https://www.python.org/downloads/ and try again."
+    MessageBox MB_OK|MB_ICONSTOP "Python 3.11 and 3.12 or 3.13 is required but was not found.$\r$\nPlease install a supported version from https://www.python.org/downloads/ and try again."
     Abort
   ${EndIf}
 

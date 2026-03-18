@@ -45,7 +45,7 @@ REM Setup mesh_generation_module
 echo [3/4] Setting up mesh_generation_module...
 cd /d "%SCRIPT_DIR%mesh_generation_module"
 if not exist "myenv" (
-    python -m venv myenv
+    py -3.11 -m venv myenv
     echo Virtual environment created.
 ) else (
     echo Virtual environment already exists.
