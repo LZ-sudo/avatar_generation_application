@@ -195,7 +195,7 @@ class StepConfigure(ctk.CTkFrame):
         # BVH Animation File
         self._bvh_picker = FilePicker(
             content,
-            label="BVH Animation File (Optional)",
+            label="BVH Animation File (Converted from Cometa's c3d animation file)",
             filetypes=[("BVH files", "*.bvh"), ("All files", "*.*")],
             entry_width=170,
             on_file_selected=self._on_bvh_selected,

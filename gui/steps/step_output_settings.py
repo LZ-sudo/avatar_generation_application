@@ -45,7 +45,7 @@ class StepOutputSettings(ctk.CTkFrame):
         # Header
         header = PageHeader(
             content_frame,
-            title="Output Settings",
+            title="Avatar Output Settings",
             subtitle="Configure where and how to save the generated avatar.",
             title_size=24,
             subtitle_size=14,
@@ -82,13 +82,13 @@ class StepOutputSettings(ctk.CTkFrame):
 
         content = panel.content
 
-        header = SectionHeader(content, text="Output Settings", font_size=16)
+        header = SectionHeader(content, text="Avatar Output Settings", font_size=16)
         header.pack(anchor="w", fill="x")
 
         # Output Directory
         self._folder_picker = FolderPicker(
             content,
-            label="Output Directory",
+            label="Avatar Output Directory",
             entry_width=380,
             on_folder_selected=self._on_folder_selected,
         )
@@ -101,7 +101,7 @@ class StepOutputSettings(ctk.CTkFrame):
         # Output Filename
         filename_label = ctk.CTkLabel(
             content,
-            text="Output Filename",
+            text="Avatar Output Filename",
             font=ctk.CTkFont(size=13),
             text_color=ThemeColors.SUBTITLE,
         )

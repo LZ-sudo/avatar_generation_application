@@ -124,7 +124,7 @@ class StepImageInput(ctk.CTkFrame):
         header = PageHeader(
             content_frame,
             title="Image Input & Measurement Extraction",
-            subtitle="Select a front view photograph and enter your height to extract body measurements.",
+            subtitle="Select a front view photograph and enter the subject's height to extract body measurements.",
             title_size=24,
             subtitle_size=14,
         )

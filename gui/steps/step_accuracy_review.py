@@ -168,8 +168,8 @@ class StepAccuracyReview(ctk.CTkFrame):
 
         headers = [
             ("Measurement", 150, "w"),
-            ("Target (cm)", 70, "e"),
-            ("Actual (cm)", 70, "e"),
+            ("Subject (cm)", 70, "e"),
+            ("Mesh (cm)", 70, "e"),
             ("Error (cm)", 70, "e"),
             ("Status", 40, "center"),
         ]
