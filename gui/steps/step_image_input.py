@@ -253,7 +253,7 @@ class StepImageInput(ctk.CTkFrame):
 
         if missing:
             self._validation_label.configure(
-                text=f"Missing: {', '.join(missing)}"
+                text=f"Missing: {missing[0]} ({len(missing)} remaining)" if len(missing) > 1 else f"Missing: {missing[0]}"
             )
             self._extract_button.configure(state="disabled")
             # Reset to extract mode if inputs changed

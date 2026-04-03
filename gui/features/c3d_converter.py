@@ -168,8 +168,6 @@ class C3dConverterView(ctk.CTkFrame):
             button_row,
             text="Convert",
             command=self._on_convert_click,
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
             height=40,
         )
         self._convert_button.configure(state="disabled")
