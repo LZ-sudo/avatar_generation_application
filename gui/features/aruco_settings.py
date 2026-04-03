@@ -38,7 +38,7 @@ class ArucoSettingsView(ctk.CTkFrame):
     def _build(self) -> None:
         """Build the view content."""
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.pack(expand=True, fill="both", padx=30, pady=30)
+        content_frame.pack(expand=True, fill="both", padx=30, pady=(10, 30))
 
         header = PageHeader(
             content_frame,
@@ -47,7 +47,7 @@ class ArucoSettingsView(ctk.CTkFrame):
             title_size=24,
             subtitle_size=14,
         )
-        header.pack(pady=(0, 20))
+        header.pack(pady=(0, 10))
 
         panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         panels_frame.pack(fill="both", expand=True)

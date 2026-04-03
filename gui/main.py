@@ -34,11 +34,7 @@ class AvatarGeneratorApp(ctk.CTk):
     - Avatar Generation
     """
 
-    COLORS = {
-        "header_bg": "#eff6ff",
-        "header_icon": "#2563eb",
-        "header_title": "#1e40af",
-    }
+    COLORS: dict = {}
 
     def __init__(self):
         super().__init__()
@@ -53,7 +49,7 @@ class AvatarGeneratorApp(ctk.CTk):
     def _setup_window(self) -> None:
         """Configure window settings."""
         self.title("Avatar Generator")
-        self.geometry("1200x900")
+        self.geometry("1000x770") # width by height
         self.resizable(False, False)
 
         ctk.set_appearance_mode("light")
@@ -61,20 +57,6 @@ class AvatarGeneratorApp(ctk.CTk):
 
     def _build_ui(self) -> None:
         """Build the main UI structure."""
-        self._header = ctk.CTkFrame(self, fg_color=self.COLORS["header_bg"])
-        self._header.pack(fill="x")
-
-        header_content = ctk.CTkFrame(self._header, fg_color="transparent")
-        header_content.pack(pady=15)
-
-        title_label = ctk.CTkLabel(
-            header_content,
-            text="Avatar Generator",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color=self.COLORS["header_title"],
-        )
-        title_label.pack()
-
         self._tabview = ctk.CTkTabview(self)
         self._tabview.pack(expand=True, fill="both", padx=0, pady=0)
 
@@ -122,7 +104,6 @@ class AvatarGeneratorApp(ctk.CTk):
         if not _PYWINSTYLES_AVAILABLE:
             return
         for widget in [
-            self._header,
             self._tabview,
             self._camera_calibration,
             self._aruco_settings,
