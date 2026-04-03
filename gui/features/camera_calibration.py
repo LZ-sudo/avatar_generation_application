@@ -62,15 +62,6 @@ class CameraCalibrationView(ctk.CTkFrame):
         self._results_panel = self._create_results_panel(panels_frame)
         self._results_panel.pack(side="left", fill="both", expand=True, padx=(8, 0))
 
-        self._calibrate_button = ActionButton(
-            content_frame,
-            text="Calibrate Camera",
-            command=self._start_calibration,
-            width=200,
-        )
-        self._calibrate_button.configure(state="disabled")
-        self._calibrate_button.pack(pady=15)
-
     def _create_input_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the image directory input panel."""
         panel = ctk.CTkFrame(
@@ -186,7 +177,16 @@ class CameraCalibrationView(ctk.CTkFrame):
             width=140,
             textvariable=self._square_size_var,
         )
-        self._square_size_entry.pack(anchor="w", pady=(5, 0))
+        self._square_size_entry.pack(anchor="w", pady=(5, 12))
+
+        self._calibrate_button = ActionButton(
+            fields_frame,
+            text="Calibrate",
+            command=self._start_calibration,
+            width=140,
+        )
+        self._calibrate_button.configure(state="disabled")
+        self._calibrate_button.pack(anchor="e", pady=(92, 0))
 
         example_frame = ctk.CTkFrame(body_frame, fg_color="transparent")
         example_frame.pack(side="left", fill="both", expand=True)

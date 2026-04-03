@@ -74,26 +74,6 @@ class C3dConverterView(ctk.CTkFrame):
         self._log_output = LogOutput(content_frame, width=480, height=75)
         self._log_output.pack(pady=(0, 0))
 
-        self._buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        self._buttons_frame.pack(pady=(20, 0))
-
-        self._convert_button = ActionButton(
-            self._buttons_frame,
-            text="Convert",
-            command=self._on_convert_click,
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
-            height=40,
-        )
-        self._convert_button.configure(state="disabled")
-        self._convert_button.pack(side="left", padx=5)
-
-        self._open_folder_button = OpenFolderButton(
-            self._buttons_frame,
-            height=40,
-        )
-        # Shown only after a successful conversion
-
         self._update_validation()
 
     def _create_converter_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
@@ -177,6 +157,23 @@ class C3dConverterView(ctk.CTkFrame):
             text_color=ThemeColors.SUBTITLE,
         )
         fps_unit_label.pack(side="left", padx=(8, 0))
+
+        button_row = ctk.CTkFrame(content, fg_color="transparent")
+        button_row.pack(fill="x", pady=(15, 0))
+
+        self._open_folder_button = OpenFolderButton(button_row, height=40)
+        # Shown only after a successful conversion
+
+        self._convert_button = ActionButton(
+            button_row,
+            text="Convert",
+            command=self._on_convert_click,
+            fg_color="#2563eb",
+            hover_color="#1d4ed8",
+            height=40,
+        )
+        self._convert_button.configure(state="disabled")
+        self._convert_button.pack(side="right")
 
         return panel
 
@@ -309,7 +306,7 @@ class C3dConverterView(ctk.CTkFrame):
         if self._set_tabs_locked:
             self._set_tabs_locked(False)
         self._open_folder_button.set_path(output_path.parent)
-        self._open_folder_button.pack(side="left", padx=5, before=self._convert_button)
+        self._open_folder_button.pack(side="left", padx=(0, 5))
         self._convert_button.configure(text="Convert Again")
         self._update_convert_button()
         self._log_output.set_complete(f"Saved: {output_path.name}")

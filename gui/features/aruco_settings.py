@@ -58,11 +58,20 @@ class ArucoSettingsView(ctk.CTkFrame):
         right_frame = ctk.CTkFrame(panels_frame, fg_color="transparent")
         right_frame.pack(side="left", fill="both", expand=True, padx=(10, 0))
 
-        current_settings_panel = self._create_current_settings_panel(right_frame)
-        current_settings_panel.pack(fill="both", expand=True, pady=(0, 10))
-
         update_settings_panel = self._create_update_settings_panel(right_frame)
-        update_settings_panel.pack(fill="both", expand=True, pady=(10, 0))
+        update_settings_panel.pack(fill="x")
+
+        self._status_label = StatusLabel(right_frame, text="")
+        self._status_label.pack(pady=(8, 0))
+
+        self._update_button = ActionButton(
+            right_frame,
+            text="Update Configuration",
+            command=self._update_configuration,
+            width=160,
+            height=28,
+        )
+        self._update_button.pack(pady=(6, 0))
 
     def _create_image_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the ArUco guide image panel."""
@@ -104,83 +113,8 @@ class ArucoSettingsView(ctk.CTkFrame):
 
         return panel
 
-    def _create_current_settings_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
-        """Create the current settings display panel."""
-        panel = ctk.CTkFrame(
-            parent,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
-
-        content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(fill="both", expand=True, padx=20, pady=15)
-
-        title = SectionTitle(content, text="Current Settings", font_size=16)
-        title.pack(anchor="w")
-
-        separator = ctk.CTkFrame(content, height=1, fg_color=ThemeColors.PANEL_BORDER)
-        separator.pack(fill="x", pady=(10, 12))
-
-        settings_frame = ctk.CTkFrame(content, fg_color="transparent")
-        settings_frame.pack(fill="both", expand=True)
-
-        self._current_marker_size_label = ctk.CTkLabel(
-            settings_frame,
-            text="Marker Size: -- cm",
-            font=ctk.CTkFont(size=14),
-            text_color=ThemeColors.LABEL,
-        )
-        self._current_marker_size_label.pack(anchor="w", pady=(0, 8))
-
-        positions_label = ctk.CTkLabel(
-            settings_frame,
-            text="Marker Positions (cm):",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=ThemeColors.LABEL,
-        )
-        positions_label.pack(anchor="w", pady=(4, 4))
-
-        self._current_top_left_label = ctk.CTkLabel(
-            settings_frame,
-            text="  Top Left:       X: --    Y: --",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        self._current_top_left_label.pack(anchor="w", pady=2)
-
-        self._current_top_right_label = ctk.CTkLabel(
-            settings_frame,
-            text="  Top Right:      X: --    Y: --",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        self._current_top_right_label.pack(anchor="w", pady=2)
-
-        self._current_bottom_left_label = ctk.CTkLabel(
-            settings_frame,
-            text="  Bottom Left:    X: --    Y: --",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        self._current_bottom_left_label.pack(anchor="w", pady=2)
-
-        self._current_bottom_right_label = ctk.CTkLabel(
-            settings_frame,
-            text="  Bottom Right:   X: --    Y: --",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        self._current_bottom_right_label.pack(anchor="w", pady=2)
-
-        self._status_label = StatusLabel(settings_frame, text="")
-        self._status_label.pack(anchor="w", pady=(8, 0))
-
-        return panel
-
     def _create_update_settings_panel(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
-        """Create the update settings input panel."""
+        """Create the settings input panel."""
         panel = ctk.CTkFrame(
             parent,
             fg_color=ThemeColors.PANEL_BG,
@@ -190,7 +124,7 @@ class ArucoSettingsView(ctk.CTkFrame):
         )
 
         content = ctk.CTkFrame(panel, fg_color="transparent")
-        content.pack(fill="both", expand=True, padx=20, pady=15)
+        content.pack(fill="x", padx=20, pady=15)
 
         title = SectionTitle(content, text="Update Settings", font_size=16)
         title.pack(anchor="w")
@@ -199,7 +133,7 @@ class ArucoSettingsView(ctk.CTkFrame):
         separator.pack(fill="x", pady=(10, 12))
 
         fields_frame = ctk.CTkFrame(content, fg_color="transparent")
-        fields_frame.pack(fill="both", expand=True)
+        fields_frame.pack(fill="x")
 
         marker_size_frame = ctk.CTkFrame(fields_frame, fg_color="transparent")
         marker_size_frame.pack(fill="x", pady=(0, 10))
@@ -239,22 +173,9 @@ class ArucoSettingsView(ctk.CTkFrame):
         self._bottom_left_x_var, self._bottom_left_y_var = self._create_position_row(
             fields_frame, "Bottom Left:"
         )
-
-        bottom_right_row = ctk.CTkFrame(fields_frame, fg_color="transparent")
-        bottom_right_row.pack(fill="x", pady=3)
-
-        self._bottom_right_x_var, self._bottom_right_y_var = self._create_position_fields(
-            bottom_right_row, "Bottom Right:"
+        self._bottom_right_x_var, self._bottom_right_y_var = self._create_position_row(
+            fields_frame, "Bottom Right:"
         )
-
-        self._update_button = ActionButton(
-            bottom_right_row,
-            text="Update Configuration",
-            command=self._update_configuration,
-            width=160,
-            height=28,
-        )
-        self._update_button.pack(side="right", padx=(15, 0))
 
         return panel
 
@@ -263,7 +184,7 @@ class ArucoSettingsView(ctk.CTkFrame):
     ) -> tuple[ctk.StringVar, ctk.StringVar]:
         """Create a position input row with X and Y fields."""
         row_frame = ctk.CTkFrame(parent, fg_color="transparent")
-        row_frame.pack(fill="x", pady=3)
+        row_frame.pack(fill="x", pady=8)
 
         return self._create_position_fields(row_frame, label_text)
 
@@ -319,33 +240,11 @@ class ArucoSettingsView(ctk.CTkFrame):
         """Load and display existing settings from marker_details.json."""
         state = self.app_state.aruco_settings
         if state.load_from_file():
-            self._update_current_settings_display()
             self._populate_input_fields()
             self._status_label.set_info("Loaded from: marker_details.json")
         else:
-            self._update_current_settings_display()
             self._populate_input_fields()
             self._status_label.set_info("Using default settings (no configuration file found)")
-
-    def _update_current_settings_display(self) -> None:
-        """Update the current settings display labels."""
-        state = self.app_state.aruco_settings
-
-        self._current_marker_size_label.configure(
-            text=f"Marker Size: {state.marker_size_cm} cm"
-        )
-        self._current_top_left_label.configure(
-            text=f"  Top Left:       X: {state.top_left.x}    Y: {state.top_left.y}"
-        )
-        self._current_top_right_label.configure(
-            text=f"  Top Right:      X: {state.top_right.x}    Y: {state.top_right.y}"
-        )
-        self._current_bottom_left_label.configure(
-            text=f"  Bottom Left:    X: {state.bottom_left.x}    Y: {state.bottom_left.y}"
-        )
-        self._current_bottom_right_label.configure(
-            text=f"  Bottom Right:   X: {state.bottom_right.x}    Y: {state.bottom_right.y}"
-        )
 
     def _populate_input_fields(self) -> None:
         """Populate input fields with current settings."""
@@ -380,7 +279,6 @@ class ArucoSettingsView(ctk.CTkFrame):
             return
 
         if state.save_to_file():
-            self._update_current_settings_display()
             self._status_label.set_success("Configuration updated successfully")
         else:
             self._status_label.set_error("Error: Failed to save configuration")

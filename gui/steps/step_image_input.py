@@ -2,7 +2,6 @@
 Step 1: Image Input and Measurement Extraction
 
 Allows the user to select a front photograph, enter height, and extract measurements.
-Displays status indicators for required configurations.
 """
 
 import customtkinter as ctk
@@ -22,73 +21,6 @@ from ..components.ui_elements import (
     ActionButton,
     StatusLabel,
 )
-
-
-class StatusIndicator(ctk.CTkFrame):
-    """A small status indicator with icon and label."""
-
-    def __init__(
-        self,
-        parent: ctk.CTkFrame,
-        label: str,
-        is_valid: bool = False,
-    ):
-        super().__init__(
-            parent,
-            fg_color=ThemeColors.ROW_ALT_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=6,
-        )
-        self.label_text = label
-        self._is_valid = is_valid
-        self._build()
-
-    def _build(self) -> None:
-        """Build the status indicator."""
-        content = ctk.CTkFrame(self, fg_color="transparent")
-        content.pack(padx=12, pady=8)
-
-        self._icon_label = ctk.CTkLabel(
-            content,
-            text="",
-            font=ctk.CTkFont(size=14),
-            width=20,
-        )
-        self._icon_label.pack(side="left")
-
-        self._text_label = ctk.CTkLabel(
-            content,
-            text=self.label_text,
-            font=ctk.CTkFont(size=13),
-            text_color=ThemeColors.LABEL,
-        )
-        self._text_label.pack(side="left", padx=(6, 0))
-
-        self._update_display()
-
-    def _update_display(self) -> None:
-        """Update the icon based on validity."""
-        if self._is_valid:
-            self._icon_label.configure(
-                text="\u2713",
-                text_color=ThemeColors.STATUS_GREEN,
-            )
-        else:
-            self._icon_label.configure(
-                text="\u2717",
-                text_color=ThemeColors.STATUS_RED,
-            )
-
-    def set_valid(self, is_valid: bool) -> None:
-        """Set the validity status."""
-        self._is_valid = is_valid
-        self._update_display()
-
-    @property
-    def is_valid(self) -> bool:
-        """Get the current validity status."""
-        return self._is_valid
 
 
 class StepImageInput(ctk.CTkFrame):
@@ -145,11 +77,33 @@ class StepImageInput(ctk.CTkFrame):
         )
         self._front_picker.pack(side="left", padx=(0, 30))
 
-        # Right column - Height input and status indicators
+        # Right column - Subject details and extract button
         right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
         right_column.pack(side="left", fill="y")
 
-        # Subject's Details panel
+        # Pack bottom elements first so details panel can expand into remaining space
+        self._status_label = StatusLabel(right_column, text="")
+        self._status_label.pack(side="bottom", pady=(5, 0))
+
+        self._extract_button = ActionButton(
+            right_column,
+            text="Extract Measurements",
+            width=200,
+            height=40,
+            command=self._extract_measurements,
+        )
+        self._extract_button.configure(state="disabled")
+        self._extract_button.pack(side="bottom", pady=(6, 0))
+
+        self._validation_label = ctk.CTkLabel(
+            right_column,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=ThemeColors.WARNING,
+        )
+        self._validation_label.pack(side="bottom", pady=(4, 0))
+
+        # Subject's Details panel (expands to fill remaining space above)
         details_panel = ctk.CTkFrame(
             right_column,
             fg_color=ThemeColors.PANEL_BG,
@@ -157,10 +111,10 @@ class StepImageInput(ctk.CTkFrame):
             border_color=ThemeColors.PANEL_BORDER,
             corner_radius=10,
         )
-        details_panel.pack(fill="x", pady=(0, 10))
+        details_panel.pack(fill="both", expand=True)
 
         details_content = ctk.CTkFrame(details_panel, fg_color="transparent")
-        details_content.pack(padx=15, pady=12)
+        details_content.pack(padx=15, pady=12, fill="x")
 
         details_title = SectionTitle(details_content, text="Subject's Details")
         details_title.pack(anchor="w", pady=(0, 8))
@@ -221,60 +175,6 @@ class StepImageInput(ctk.CTkFrame):
         )
         height_unit.pack(side="left", padx=(6, 0))
 
-        # Configuration status panel
-        status_panel = ctk.CTkFrame(
-            right_column,
-            fg_color=ThemeColors.PANEL_BG,
-            border_width=1,
-            border_color=ThemeColors.PANEL_BORDER,
-            corner_radius=10,
-        )
-        status_panel.pack(fill="x", pady=(0, 10))
-
-        status_content = ctk.CTkFrame(status_panel, fg_color="transparent")
-        status_content.pack(padx=15, pady=12)
-
-        status_title = SectionTitle(status_content, text="Configuration Status")
-        status_title.pack(anchor="w", pady=(0, 8))
-
-        self._camera_status = StatusIndicator(
-            status_content,
-            label="Camera Calibration",
-            is_valid=False,
-        )
-        self._camera_status.pack(anchor="w", pady=(0, 4))
-
-        self._aruco_status = StatusIndicator(
-            status_content,
-            label="ArUco Settings",
-            is_valid=False,
-        )
-        self._aruco_status.pack(anchor="w")
-
-        # Validation message
-        self._validation_label = ctk.CTkLabel(
-            content_frame,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.WARNING,
-        )
-        self._validation_label.pack(pady=(10, 0))
-
-        # Extract button
-        self._extract_button = ActionButton(
-            content_frame,
-            text="Extract Measurements",
-            width=200,
-            height=40,
-            command=self._extract_measurements,
-        )
-        self._extract_button.configure(state="disabled")
-        self._extract_button.pack(pady=(0, 0))
-
-        # Status label for extraction
-        self._status_label = StatusLabel(content_frame, text="")
-        self._status_label.pack(pady=(5, 0))
-
         # Restore existing state
         if self.app_state.image_input.front_image_path:
             self._front_picker.set_image(self.app_state.image_input.front_image_path)
@@ -318,18 +218,12 @@ class StepImageInput(ctk.CTkFrame):
         self.app_state.notify_change()
 
     def _update_config_status(self) -> None:
-        """Update configuration status indicators."""
-        # Check camera calibration
+        """Update configuration validity in app state."""
         cal_path = self.app_state.camera_calibration.get_output_path()
-        camera_valid = cal_path.exists()
-        self._camera_status.set_valid(camera_valid)
-        self.app_state.image_input.camera_calibration_valid = camera_valid
+        self.app_state.image_input.camera_calibration_valid = cal_path.exists()
 
-        # Check ArUco settings
         aruco_path = self.app_state.aruco_settings.get_config_path()
-        aruco_valid = aruco_path.exists()
-        self._aruco_status.set_valid(aruco_valid)
-        self.app_state.image_input.aruco_settings_valid = aruco_valid
+        self.app_state.image_input.aruco_settings_valid = aruco_path.exists()
 
         self._update_validation()
 
