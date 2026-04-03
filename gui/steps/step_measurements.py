@@ -101,8 +101,29 @@ class StepMeasurements(ctk.CTkFrame):
 
         measurements_content = measurements_panel.content
 
-        measurements_title = SectionTitle(measurements_content, text="Extracted Measurements")
-        measurements_title.pack(anchor="w", pady=(0, 10))
+        # Button area pinned to bottom (must be packed before top items)
+        button_area = ctk.CTkFrame(measurements_content, fg_color="transparent")
+        button_area.pack(side="bottom", fill="x")
+
+        self._status_label = StatusLabel(button_area, text="")
+        self._status_label.pack(side="bottom")
+
+        self._configure_button = ActionButton(
+            button_area,
+            text="Configure Mesh",
+            width=200,
+            height=40,
+            command=self._compute_parameters,
+        )
+        self._configure_button.pack(side="bottom", pady=(5, 5))
+
+        self._processing_info_label = ctk.CTkLabel(
+            button_area,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=ThemeColors.SUBTITLE,
+        )
+        # Not packed initially — shown above button when computing
 
         # All measurement fields
         all_measurements = [
@@ -126,44 +147,8 @@ class StepMeasurements(ctk.CTkFrame):
                 unit="cm",
                 on_change=lambda v, fn=field_name: self._on_field_change(fn, v),
             )
-            field.pack(anchor="w", pady=3)
+            field.pack(anchor="w", pady=2)
             self._fields[field_name] = field
-
-        # Info text below measurements
-        info_label = ctk.CTkLabel(
-            measurements_content,
-            text="You can manually adjust values if needed.",
-            font=ctk.CTkFont(size=11),
-            text_color=ThemeColors.INFO_TEXT,
-        )
-        info_label.pack(anchor="w", pady=(8, 0))
-
-        # Configure Mesh button (centered below both panels)
-        button_container = ctk.CTkFrame(content_frame, fg_color="transparent")
-        button_container.pack(pady=(20, 0))
-
-        # Info label about processing time
-        self._processing_info_label = ctk.CTkLabel(
-            button_container,
-            text="Processing may take up to 2 minutes to complete",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        self._processing_info_label.pack(pady=(0, 10))
-        self._processing_info_label.pack_forget()  # Hidden initially
-
-        self._configure_button = ActionButton(
-            button_container,
-            text="Configure Mesh",
-            width=200,
-            height=40,
-            command=self._compute_parameters,
-        )
-        self._configure_button.pack()
-
-        # Status label for parameter computation
-        self._status_label = StatusLabel(button_container, text="")
-        self._status_label.pack(pady=(8, 0))
 
     def on_enter(self) -> None:
         """Called when entering this step."""
@@ -264,7 +249,7 @@ class StepMeasurements(ctk.CTkFrame):
             field.set_enabled(False)
         # Disable button and show processing info
         self._configure_button.configure(state="disabled")
-        self._processing_info_label.pack(pady=(0, 10), before=self._configure_button)
+        self._processing_info_label.pack(pady=(5, 0))
         self._status_label.clear()
         self.app_state.notify_change()
 
@@ -294,7 +279,6 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
-        # Hide processing info label
         self._processing_info_label.pack_forget()
 
         # Show summary from report
@@ -330,7 +314,6 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
-        # Hide processing info label
         self._processing_info_label.pack_forget()
 
         # Re-enable button

@@ -152,6 +152,15 @@ class StepAccuracyReview(ctk.CTkFrame):
 
         panel_content = main_panel.content
 
+        # Proceed button pinned to bottom (must be packed before top items)
+        self._proceed_button = ActionButton(
+            panel_content,
+            text="Proceed to Configure",
+            command=self._on_proceed_click,
+            primary=True,
+        )
+        self._proceed_button.pack(side="bottom", pady=(10, 5))
+
         # Summary section
         self._summary_frame = ctk.CTkFrame(panel_content, fg_color="transparent")
         self._summary_frame.pack(fill="x", pady=(0, 15))
@@ -193,21 +202,6 @@ class StepAccuracyReview(ctk.CTkFrame):
         )
         self._rows_container.pack()
 
-        # Button frame - centered
-        button_frame = ctk.CTkFrame(
-            content_frame,
-            fg_color="transparent",
-        )
-        button_frame.pack(pady=(10, 0))
-
-        # Proceed button (centered)
-        self._proceed_button = ActionButton(
-            button_frame,
-            text="Proceed to Configure",
-            command=self._on_proceed_click,
-            primary=True,
-        )
-        self._proceed_button.pack()
 
     def on_enter(self) -> None:
         """Called when entering this step."""
@@ -299,16 +293,6 @@ class StepAccuracyReview(ctk.CTkFrame):
         )
         max_label.pack(side="left")
 
-        # Info text
-        if not all_converged:
-            info_text = "Some measurements did not converge. You may proceed or go back to adjust measurements."
-            info_label = ctk.CTkLabel(
-                self._summary_frame,
-                text=info_text,
-                font=ctk.CTkFont(size=11),
-                text_color=ThemeColors.SUBTITLE,
-            )
-            info_label.pack(anchor="w", pady=(8, 0))
 
     def _on_proceed_click(self) -> None:
         """Handle proceed button click."""

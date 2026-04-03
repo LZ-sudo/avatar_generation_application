@@ -58,14 +58,17 @@ class ArucoSettingsView(ctk.CTkFrame):
         right_frame = ctk.CTkFrame(panels_frame, fg_color="transparent")
         right_frame.pack(side="left", fill="both", expand=True, padx=(10, 0))
 
-        update_settings_panel = self._create_update_settings_panel(right_frame)
+        center_wrapper = ctk.CTkFrame(right_frame, fg_color="transparent")
+        center_wrapper.pack(expand=True)
+
+        update_settings_panel = self._create_update_settings_panel(center_wrapper)
         update_settings_panel.pack(fill="x")
 
-        self._status_label = StatusLabel(right_frame, text="")
+        self._status_label = StatusLabel(center_wrapper, text="")
         self._status_label.pack(pady=(8, 0))
 
         self._update_button = ActionButton(
-            right_frame,
+            center_wrapper,
             text="Update Configuration",
             command=self._update_configuration,
             width=160,

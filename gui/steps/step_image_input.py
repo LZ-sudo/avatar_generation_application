@@ -67,15 +67,19 @@ class StepImageInput(ctk.CTkFrame):
         main_frame.pack(pady=20)
 
         # Left column - Front image picker
+        picker_wrapper = ctk.CTkFrame(main_frame, fg_color="transparent", width=300, height=350)
+        picker_wrapper.pack(side="left", padx=(0, 30))
+        picker_wrapper.pack_propagate(False)
+
         self._front_picker = ImagePicker(
-            main_frame,
+            picker_wrapper,
             label="Front View",
             description="Full body photo from the front",
             on_image_selected=self._on_front_image_selected,
             width=300,
             height=350,
         )
-        self._front_picker.pack(side="left", padx=(0, 30))
+        self._front_picker.pack(expand=True, fill="both")
 
         # Right column - Subject details and extract button
         right_column = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -88,7 +92,7 @@ class StepImageInput(ctk.CTkFrame):
         self._extract_button = ActionButton(
             right_column,
             text="Extract Measurements",
-            width=200,
+            width=250,
             height=40,
             command=self._extract_measurements,
         )
@@ -100,6 +104,7 @@ class StepImageInput(ctk.CTkFrame):
             text="",
             font=ctk.CTkFont(size=12),
             text_color=ThemeColors.WARNING,
+            height=18,
         )
         self._validation_label.pack(side="bottom", pady=(4, 0))
 
