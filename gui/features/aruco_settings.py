@@ -26,7 +26,7 @@ class ArucoSettingsView(ctk.CTkFrame):
     Allows users to configure ArUco marker positions and size for measurement calibration.
     """
 
-    GUIDE_IMAGE_SIZE = (466, 400)
+    GUIDE_IMAGE_SIZE = (466, 420)
 
     def __init__(self, parent: ctk.CTkFrame, app_state: AppState):
         super().__init__(parent, fg_color="transparent")
@@ -38,7 +38,7 @@ class ArucoSettingsView(ctk.CTkFrame):
     def _build(self) -> None:
         """Build the view content."""
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.pack(expand=True, fill="both", padx=30, pady=(10, 30))
+        content_frame.pack(expand=True, fill="both", padx=30, pady=(30, 30))
 
         header = PageHeader(
             content_frame,
@@ -71,8 +71,8 @@ class ArucoSettingsView(ctk.CTkFrame):
             center_wrapper,
             text="Update Configuration",
             command=self._update_configuration,
-            width=160,
-            height=28,
+            width=200,
+            height=40,
         )
         self._update_button.pack(pady=(6, 0))
 

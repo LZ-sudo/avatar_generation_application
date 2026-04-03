@@ -102,7 +102,7 @@ class StepMeasurements(ctk.CTkFrame):
 
         # Button area pinned to bottom (must be packed before top items)
         button_area = ctk.CTkFrame(measurements_content, fg_color="transparent")
-        button_area.pack(side="bottom", fill="x")
+        button_area.pack(side="bottom", fill="x", pady=(12, 0))
 
         self._status_label = StatusLabel(button_area, text="")
         self._status_label.pack(side="bottom")

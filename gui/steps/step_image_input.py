@@ -88,7 +88,7 @@ class StepImageInput(ctk.CTkFrame):
         # Pack bottom elements first so details panel can expand into remaining space
         # Order: status at very bottom, validation above it, button above validation
         self._status_label = StatusLabel(right_column, text="")
-        self._status_label.pack(side="bottom", pady=(3, 0))
+        self._status_label.pack(side="bottom", pady=(6, 0))
 
         self._validation_label = ctk.CTkLabel(
             right_column,
@@ -99,7 +99,7 @@ class StepImageInput(ctk.CTkFrame):
             width=250,
             wraplength=250,
         )
-        self._validation_label.pack(side="bottom", pady=(2, 0))
+        self._validation_label.pack(side="bottom", pady=(12, 0))
 
         self._extract_button = ActionButton(
             right_column,
@@ -109,7 +109,7 @@ class StepImageInput(ctk.CTkFrame):
             command=self._extract_measurements,
         )
         self._extract_button.configure(state="disabled")
-        self._extract_button.pack(side="bottom", pady=(6, 0))
+        self._extract_button.pack(side="bottom", pady=(20, 0))
 
         # Subject's Details panel (expands to fill remaining space above)
         details_panel = ctk.CTkFrame(

@@ -61,7 +61,7 @@ class C3dConverterView(ctk.CTkFrame):
         header.pack(pady=(0, 20))
 
         panel = self._create_converter_panel(content_frame)
-        panel.pack(pady=20)
+        panel.pack(pady=5)
 
         self._validation_label = ctk.CTkLabel(
             content_frame,
