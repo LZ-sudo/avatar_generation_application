@@ -61,7 +61,7 @@ class StepGenerate(ctk.CTkFrame):
         self._summary_frame.pack(pady=20)
 
         self._progress_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        self._progress_frame.pack(pady=20)
+        self._progress_frame.pack(pady=(20, 5))
         self._log_output = LogOutput(self._progress_frame, width=400, height=75)
         self._log_output.pack()
 
@@ -214,7 +214,7 @@ class StepGenerate(ctk.CTkFrame):
             self._set_tabs_locked(False)
         self._log_output.set_complete("Avatar generated successfully!")
         self._open_folder_button.set_path(self.app_state.output_settings.output_directory)
-        self._buttons_frame.pack(pady=20)
+        self._buttons_frame.pack(pady=(5, 0))
 
         if self.app_state.generate.preview_images:
             self._show_preview(self.app_state.generate.preview_images[0])

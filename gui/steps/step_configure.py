@@ -116,21 +116,25 @@ class StepConfigure(ctk.CTkFrame):
         panels_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         panels_frame.pack(pady=20)
 
-        avatar_options = self._create_avatar_options(panels_frame)
-        avatar_options.pack(side="left", padx=15, anchor="n")
-
+        # Left column - Hair Preview
         preview_panel = self._create_hair_preview(panels_frame)
-        preview_panel.pack(side="left", padx=15, anchor="n")
+        preview_panel.pack(side="left", padx=(0, 15), anchor="n")
 
-        # Next button (centered)
+        # Right column - Avatar Settings + Next button
+        right_col = ctk.CTkFrame(panels_frame, fg_color="transparent")
+        right_col.pack(side="left", padx=(15, 0), anchor="n")
+
+        avatar_options = self._create_avatar_options(right_col)
+        avatar_options.pack()
+
         self._next_button = ActionButton(
-            content_frame,
+            right_col,
             text="Next",
             command=self._on_next_click,
             width=200,
             height=40,
         )
-        self._next_button.pack(pady=(30, 0))
+        self._next_button.pack(pady=(10, 0))
 
     def _create_avatar_options(self, parent: ctk.CTkFrame) -> ctk.CTkFrame:
         """Create the avatar options panel."""

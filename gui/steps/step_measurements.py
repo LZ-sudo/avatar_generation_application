@@ -6,7 +6,6 @@ Displays extracted measurements with visualization and allows manual corrections
 
 import customtkinter as ctk
 from typing import Callable, Optional
-from pathlib import Path
 from PIL import Image
 import threading
 
@@ -115,15 +114,7 @@ class StepMeasurements(ctk.CTkFrame):
             height=40,
             command=self._compute_parameters,
         )
-        self._configure_button.pack(side="bottom", pady=(5, 5))
-
-        self._processing_info_label = ctk.CTkLabel(
-            button_area,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.SUBTITLE,
-        )
-        # Not packed initially — shown above button when computing
+        self._configure_button.pack(side="bottom", pady=(5, 2))
 
         # All measurement fields
         all_measurements = [
@@ -137,7 +128,6 @@ class StepMeasurements(ctk.CTkFrame):
             ("upper_leg_length_cm", "Upper Leg Length"),
             ("lower_leg_length_cm", "Lower Leg Length"),
             ("hand_length_cm", "Hand Length"),
-            ("hair_length_cm", "Hair Length"),
         ]
 
         for field_name, label in all_measurements:
@@ -165,7 +155,6 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._navigate_to_accuracy_review,
             )
-            self._processing_info_label.pack_forget()
             # Show previous result summary if available
             report = self.app_state.measurements.parameters_report
             if report:
@@ -183,7 +172,6 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._compute_parameters,
             )
-            self._processing_info_label.pack_forget()
             self._status_label.clear()
 
     def _load_visualization(self) -> None:
@@ -230,7 +218,6 @@ class StepMeasurements(ctk.CTkFrame):
         self._fields["upper_leg_length_cm"].set_value(m.upper_leg_length_cm)
         self._fields["lower_leg_length_cm"].set_value(m.lower_leg_length_cm)
         self._fields["hand_length_cm"].set_value(m.hand_length_cm)
-        self._fields["hair_length_cm"].set_value(m.hair_length_cm)
 
     def _on_field_change(self, field_name: str, value: Optional[float]) -> None:
         """Handle field value change."""
@@ -247,9 +234,8 @@ class StepMeasurements(ctk.CTkFrame):
         # Disable all input fields during processing
         for field in self._fields.values():
             field.set_enabled(False)
-        # Disable button and show processing info
-        self._configure_button.configure(state="disabled")
-        self._processing_info_label.pack(pady=(5, 0))
+        # Disable button and show processing state
+        self._configure_button.start_processing("Configuring Mesh...")
         self._status_label.clear()
         self.app_state.notify_change()
 
@@ -279,8 +265,6 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
-        self._processing_info_label.pack_forget()
-
         # Show summary from report
         summary = result.get("summary", {})
         converged = summary.get("converged_count", 0)
@@ -288,11 +272,8 @@ class StepMeasurements(ctk.CTkFrame):
         mean_error = summary.get("mean_absolute_error", 0)
 
         # Update button text and re-enable for navigation
-        self._configure_button.configure(
-            text="Review Accuracy",
-            state="normal",
-            command=self._navigate_to_accuracy_review,
-        )
+        self._configure_button.stop_processing("Review Accuracy")
+        self._configure_button.configure(command=self._navigate_to_accuracy_review)
 
         self._status_label.set_success(
             f"{converged}/{total} measurements converged, Mean error: {mean_error:.2f}cm"
@@ -314,10 +295,7 @@ class StepMeasurements(ctk.CTkFrame):
         for field in self._fields.values():
             field.set_enabled(True)
 
-        self._processing_info_label.pack_forget()
-
-        # Re-enable button
-        self._configure_button.configure(state="normal")
+        self._configure_button.stop_processing("Configure Mesh")
 
         # Show error message
         error_text = f"Error: {error_message[:80]}..." if len(error_message) > 80 else f"Error: {error_message}"
