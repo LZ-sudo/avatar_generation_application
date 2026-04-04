@@ -263,6 +263,29 @@ class StepConfigure(ctk.CTkFrame):
         self.app_state.configure.bvh_animation_path = file_path
         self.app_state.notify_change()
 
+    def on_enter(self) -> None:
+        """Called when entering this step."""
+        current_rig = next(
+            (k for k, v in self.RIG_OPTIONS.items() if v == self.app_state.configure.rig_type.value),
+            "CMU MB"
+        )
+        self._rig_var.set(current_rig)
+        self._rig_dropdown.set(current_rig)
+
+        current_hair_display = next(
+            (name for name, asset in self._hair_assets if asset == self.app_state.configure.hair_asset),
+            self._hair_assets[0][0]
+        )
+        self._hair_var.set(current_hair_display)
+        self._hair_dropdown.set(current_hair_display)
+
+        if self.app_state.configure.bvh_animation_path:
+            self._bvh_picker.set_path(self.app_state.configure.bvh_animation_path)
+        else:
+            self._bvh_picker.clear()
+
+        self._update_preview()
+
     def _on_next_click(self) -> None:
         """Handle next button click."""
         if self.on_navigate_next:

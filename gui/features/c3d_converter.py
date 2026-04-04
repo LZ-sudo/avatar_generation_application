@@ -22,6 +22,7 @@ from ..components.ui_elements import (
     FolderPicker,
     OpenFolderButton,
     ActionButton,
+    StatusLabel,
 )
 from ..components.log_output import LogOutput
 
@@ -63,12 +64,7 @@ class C3dConverterView(ctk.CTkFrame):
         panel = self._create_converter_panel(content_frame)
         panel.pack(pady=5)
 
-        self._validation_label = ctk.CTkLabel(
-            content_frame,
-            text="",
-            font=ctk.CTkFont(size=12),
-            text_color=ThemeColors.WARNING,
-        )
+        self._validation_label = StatusLabel(content_frame, text="")
         self._validation_label.pack(pady=(0, 5))
 
         self._log_output = LogOutput(content_frame, width=480, height=75)
@@ -196,9 +192,9 @@ class C3dConverterView(ctk.CTkFrame):
         if not output_dir:
             missing.append("output directory")
         if missing:
-            self._validation_label.configure(text=f"Missing: {', '.join(missing)}")
+            self._validation_label.set_error(f"Missing: {', '.join(missing)}")
         else:
-            self._validation_label.configure(text="")
+            self._validation_label.clear()
 
     def _update_convert_button(self) -> None:
         """Enable convert button only when required inputs are set."""
@@ -307,7 +303,7 @@ class C3dConverterView(ctk.CTkFrame):
         self._open_folder_button.pack(side="left", padx=(0, 5))
         self._convert_button.configure(text="Convert Again")
         self._update_convert_button()
-        self._log_output.set_complete(f"Saved: {output_path.name}")
+        self._validation_label.set_success(f"Saved: {output_path.name}")
 
     def _on_conversion_error(self, error: str) -> None:
         """Handle conversion error."""
@@ -316,5 +312,5 @@ class C3dConverterView(ctk.CTkFrame):
             self._set_tabs_locked(False)
         self._convert_button.configure(text="Convert")
         self._update_convert_button()
-        self._log_output.set_error(f"Error: {error}")
+        self._validation_label.set_error(f"Error: {error}")
 

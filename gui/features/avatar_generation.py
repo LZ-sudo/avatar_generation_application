@@ -124,6 +124,10 @@ class AvatarGenerationView(ctk.CTkFrame):
             self.steps[step].on_enter()
         elif step == WizardStep.ACCURACY_REVIEW:
             self.steps[step].on_enter()
+        elif step == WizardStep.CONFIGURE:
+            self.steps[step].on_enter()
+        elif step == WizardStep.OUTPUT_SETTINGS:
+            self.steps[step].on_enter()
         elif step == WizardStep.GENERATE:
             self.steps[step].on_enter()
 

@@ -363,6 +363,8 @@ class StepImageInput(ctk.CTkFrame):
 
     def on_enter(self) -> None:
         """Called when entering this step."""
+        # Race is always fixed to Asian in this UI — restore it on every entry
+        self.app_state.image_input.race = "asian"
         self._update_config_status()
 
         # Sync image picker with app state

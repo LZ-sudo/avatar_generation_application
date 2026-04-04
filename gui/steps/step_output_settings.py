@@ -179,6 +179,17 @@ class StepOutputSettings(ctk.CTkFrame):
         if self.validate() and self.on_generate:
             self.on_generate()
 
+    def on_enter(self) -> None:
+        """Called when entering this step."""
+        if self.app_state.output_settings.output_directory:
+            self._folder_picker.set_path(self.app_state.output_settings.output_directory)
+        else:
+            self._folder_picker.clear()
+        self._filename_var.set(self.app_state.output_settings.output_filename)
+        self._clothing_var.set(self.app_state.output_settings.apply_clothing)
+        self._update_validation()
+        self._update_generate_button()
+
     def validate(self) -> bool:
         """Validate the step is complete."""
         # Always export as FBX only

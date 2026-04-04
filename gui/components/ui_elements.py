@@ -7,6 +7,7 @@ to ensure consistent styling and reduce code duplication.
 
 import subprocess
 import sys
+import tkinter as tk
 
 import customtkinter as ctk
 from pathlib import Path
@@ -592,11 +593,12 @@ class SectionHeader(ctk.CTkFrame):
         self._title.configure(text=text)
 
 
-class ImagePreview(ctk.CTkLabel):
+class ImagePreview(ctk.CTkFrame):
     """
     Image preview component with automatic loading and error handling.
 
-    Handles image loading, thumbnailing, and displays error messages if loading fails.
+    Uses a tk.Canvas with PIL.ImageTk.PhotoImage directly to avoid CTK's
+    internal image management issues with garbage-collected PhotoImages.
     """
 
     def __init__(
@@ -607,19 +609,34 @@ class ImagePreview(ctk.CTkLabel):
         placeholder_text: str = "No preview available",
         bg_color: Optional[str] = None,
     ):
-        super().__init__(
-            parent,
-            text=placeholder_text,
-            width=width,
-            height=height,
-            fg_color=bg_color or ThemeColors.PREVIEW_BG,
-            corner_radius=10,
-            text_color=ThemeColors.SUBTITLE,
-        )
+        bg = bg_color or ThemeColors.PREVIEW_BG
+        super().__init__(parent, width=width, height=height, fg_color=bg, corner_radius=10)
+        self.pack_propagate(False)
         self._width = width
         self._height = height
         self._placeholder_text = placeholder_text
-        self._current_image = None
+        self._bg = bg
+        self._photo_image = None
+        self._image_item = None
+
+        self._canvas = tk.Canvas(
+            self,
+            width=width,
+            height=height,
+            bg=bg,
+            highlightthickness=0,
+            bd=0,
+        )
+        self._canvas.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._text_item = self._canvas.create_text(
+            width // 2,
+            height // 2,
+            text=placeholder_text,
+            fill=ThemeColors.SUBTITLE,
+            justify="center",
+            width=width - 20,
+        )
 
     def load_image(self, image_path: Path) -> bool:
         """
@@ -636,35 +653,42 @@ class ImagePreview(ctk.CTkLabel):
             return False
 
         if not image_path.exists():
-            self.configure(text="Image not found", image=None)
-            self._current_image = None
+            self._show_text("Image not found")
             return False
 
         try:
-            from PIL import Image as PILImage
+            from PIL import Image as PILImage, ImageTk
 
             pil_image = PILImage.open(image_path)
             pil_image.thumbnail((self._width, self._height), PILImage.Resampling.LANCZOS)
 
-            ctk_image = ctk.CTkImage(
-                light_image=pil_image,
-                dark_image=pil_image,
-                size=pil_image.size
+            self._photo_image = ImageTk.PhotoImage(pil_image)
+            if self._image_item is not None:
+                self._canvas.delete(self._image_item)
+            self._canvas.itemconfigure(self._text_item, text="")
+            self._image_item = self._canvas.create_image(
+                self._width // 2,
+                self._height // 2,
+                image=self._photo_image,
+                anchor="center",
             )
-
-            self._current_image = ctk_image
-            self.configure(text="", image=ctk_image)
             return True
 
         except Exception as e:
-            self.configure(text=f"Error loading image:\n{str(e)}", image=None)
-            self._current_image = None
+            self._show_text(f"Error loading image:\n{str(e)}")
             return False
+
+    def _show_text(self, text: str) -> None:
+        """Display text and remove any current image."""
+        if self._image_item is not None:
+            self._canvas.delete(self._image_item)
+            self._image_item = None
+        self._photo_image = None
+        self._canvas.itemconfigure(self._text_item, text=text)
 
     def clear(self) -> None:
         """Clear the preview and show placeholder text."""
-        self.configure(text=self._placeholder_text, image=None)
-        self._current_image = None
+        self._show_text(self._placeholder_text)
 
 
 class FilePicker(ctk.CTkFrame):
