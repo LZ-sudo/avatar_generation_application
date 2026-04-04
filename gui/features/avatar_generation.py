@@ -86,6 +86,7 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.app_state,
                 self.backend,
                 set_tabs_locked=self._set_tabs_locked,
+                on_generate_another=self._generate_another,
             ),
         }
 
@@ -159,3 +160,8 @@ class AvatarGenerationView(ctk.CTkFrame):
         """Start generation by navigating to GENERATE step."""
         if self.app_state.go_next():
             self._show_step(self.app_state.current_step)
+
+    def _generate_another(self) -> None:
+        """Reset all state and return to image input for a new generation."""
+        self.app_state.reset()
+        self._show_step(WizardStep.IMAGE_INPUT)

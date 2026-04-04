@@ -236,7 +236,7 @@ class StepMeasurements(ctk.CTkFrame):
             field.set_enabled(False)
         # Disable button and show processing state
         self._configure_button.start_processing("Configuring Mesh...")
-        self._status_label.clear()
+        self._status_label.set_info("This process will take 2-3 minutes")
         self.app_state.notify_change()
 
         thread = threading.Thread(target=self._run_parameter_computation)

@@ -365,7 +365,25 @@ class StepImageInput(ctk.CTkFrame):
         """Called when entering this step."""
         self._update_config_status()
 
-        # Restore button state based on extraction status
+        # Sync image picker with app state
+        if self.app_state.image_input.front_image_path:
+            self._front_picker.set_image(self.app_state.image_input.front_image_path)
+        else:
+            self._front_picker.clear_image()
+
+        # Sync height entry
+        if self.app_state.image_input.height_cm:
+            self._height_var.set(str(self.app_state.image_input.height_cm))
+        else:
+            self._height_var.set("")
+
+        # Sync gender dropdown
+        if self.app_state.image_input.gender:
+            self._gender_dropdown.set_value(self.app_state.image_input.gender.capitalize())
+        else:
+            self._gender_dropdown.set_value("Select gender")
+
+        # Restore button and status state
         if self.app_state.measurements.is_extracted:
             self._extraction_complete = True
             self._extract_button.configure(
@@ -380,6 +398,7 @@ class StepImageInput(ctk.CTkFrame):
                 text="Extract Measurements",
                 command=self._extract_measurements,
             )
+            self._status_label.clear()
 
     def validate(self) -> bool:
         """Validate the step is complete."""
