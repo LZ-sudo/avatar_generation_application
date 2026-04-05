@@ -210,7 +210,7 @@ class RealBackendInterface(BackendInterface):
             json.dump(updated_measurements, f, indent=2)
 
         # Check for visualization image
-        visualization_path = visualization_dir / "aruco_backdrop_detection.jpg"
+        visualization_path = visualization_dir / "measurement_visualization.jpg"
         if not visualization_path.exists():
             visualization_path = None
 
