@@ -50,11 +50,13 @@ class WizardNav(ctk.CTkFrame):
         self.app_state = app_state
         self.on_step_click = on_step_click
         self._indicator_widgets: list = []
+        self._last_rendered_step = None
         self._build()
 
     def _build(self) -> None:
         """Build the navigation component."""
         self._create_step_indicators()
+        self._last_rendered_step = self.app_state.current_step
 
     def _create_step_indicators(self) -> None:
         """Create step indicator controls."""
@@ -150,5 +152,8 @@ class WizardNav(ctk.CTkFrame):
             self.on_step_click(step)
 
     def update_indicators(self) -> None:
-        """Refresh the step indicators based on current state."""
+        """Refresh the step indicators only when the active step has changed."""
+        if self.app_state.current_step == self._last_rendered_step:
+            return
+        self._last_rendered_step = self.app_state.current_step
         self._create_step_indicators()
