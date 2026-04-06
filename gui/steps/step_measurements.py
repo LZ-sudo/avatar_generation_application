@@ -4,6 +4,7 @@ Step 2: Measurements Review
 Displays extracted measurements with visualization and allows manual corrections.
 """
 
+import json
 import customtkinter as ctk
 from typing import Callable, Optional
 from PIL import Image
@@ -242,9 +243,40 @@ class StepMeasurements(ctk.CTkFrame):
         thread = threading.Thread(target=self._run_parameter_computation)
         thread.start()
 
+    def _sync_measurements_to_file(self) -> None:
+        """Write current app state measurements back to measurements.json on disk.
+
+        Ensures user edits (including manually filled missing fields) are
+        persisted before the mesh parameter computation reads the file.
+        """
+        measurements_path = self.app_state.measurements.get_measurements_path()
+        if not measurements_path.exists():
+            return
+
+        with open(measurements_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        body = data.get("body_measurements", {})
+        m = self.app_state.measurements
+        for field_name in [
+            "height_cm", "head_width_cm", "shoulder_width_cm", "hip_width_cm",
+            "shoulder_to_waist_cm", "upper_arm_length_cm", "forearm_length_cm",
+            "upper_leg_length_cm", "lower_leg_length_cm", "hand_length_cm",
+        ]:
+            value = getattr(m, field_name, None)
+            if value is not None:
+                body[field_name] = value
+            else:
+                body.pop(field_name, None)
+
+        data["body_measurements"] = body
+        with open(measurements_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
     def _run_parameter_computation(self) -> None:
         """Run parameter computation in background thread."""
         try:
+            self._sync_measurements_to_file()
             measurements_path = self.app_state.measurements.get_measurements_path()
             result = self.backend.compute_mesh_parameters(measurements_path)
             self.after(0, lambda: self._on_computation_complete(result))
