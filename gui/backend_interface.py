@@ -198,11 +198,17 @@ class RealBackendInterface(BackendInterface):
         with open(output_measurements) as f:
             measurements = json.load(f)
 
-        # Add gender and race to measurements and save back
+        # Add gender and race to measurements and save back.
+        # "body_measurements" is the current key; fall back to legacy "measurements"
+        # key for backwards compatibility with older extraction outputs.
+        body = (
+            measurements.get("body_measurements")
+            or {}
+        )
         updated_measurements = {
             "gender": gender,
             "race": race,
-            "body_measurements": measurements.get("body_measurements", {}),
+            "body_measurements": body,
             "hair_measurements": measurements.get("hair_measurements", {}),
         }
 
@@ -304,6 +310,10 @@ class RealBackendInterface(BackendInterface):
         # Add clothing assets if enabled
         if config.get("apply_clothing"):
             cmd.extend(["--clothing", "Scrub_Pants", "Scrub_Shirt"])
+
+        # Add collision mesh generation if enabled
+        if config.get("apply_collision"):
+            cmd.append("--collision")
 
         # Run Blender via run_blender.py, streaming stdout line by line
         process = subprocess.Popen(

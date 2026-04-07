@@ -140,6 +140,17 @@ class StepOutputSettings(ctk.CTkFrame):
         )
         clothing_checkbox.pack(anchor="w", pady=(10, 0))
 
+        # Calculate Collision Physics checkbox
+        self._collision_var = ctk.BooleanVar(value=self.app_state.output_settings.apply_collision)
+        collision_checkbox = ctk.CTkCheckBox(
+            content,
+            text="Calculate collision physics (UCX meshes for Unreal Engine)",
+            variable=self._collision_var,
+            command=self._on_collision_toggle,
+            font=ctk.CTkFont(size=13),
+        )
+        collision_checkbox.pack(anchor="w", pady=(6, 0))
+
         return panel
 
     def _on_folder_selected(self, folder_path: Path) -> None:
@@ -152,6 +163,11 @@ class StepOutputSettings(ctk.CTkFrame):
     def _on_clothing_toggle(self) -> None:
         """Handle clothing checkbox toggle."""
         self.app_state.output_settings.apply_clothing = self._clothing_var.get()
+        self.app_state.notify_change()
+
+    def _on_collision_toggle(self) -> None:
+        """Handle collision physics checkbox toggle."""
+        self.app_state.output_settings.apply_collision = self._collision_var.get()
         self.app_state.notify_change()
 
     def _on_filename_change(self, *args) -> None:
@@ -187,6 +203,7 @@ class StepOutputSettings(ctk.CTkFrame):
             self._folder_picker.clear()
         self._filename_var.set(self.app_state.output_settings.output_filename)
         self._clothing_var.set(self.app_state.output_settings.apply_clothing)
+        self._collision_var.set(self.app_state.output_settings.apply_collision)
         self._update_validation()
         self._update_generate_button()
 

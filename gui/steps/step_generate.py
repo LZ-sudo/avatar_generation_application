@@ -188,6 +188,7 @@ class StepGenerate(ctk.CTkFrame):
                     "export_fbx": self.app_state.output_settings.export_fbx,
                     "export_obj": self.app_state.output_settings.export_obj,
                     "apply_clothing": self.app_state.output_settings.apply_clothing,
+                    "apply_collision": self.app_state.output_settings.apply_collision,
                 },
                 log_callback=log_callback,
             )
