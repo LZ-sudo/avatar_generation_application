@@ -311,10 +311,6 @@ class RealBackendInterface(BackendInterface):
         if config.get("apply_clothing"):
             cmd.extend(["--clothing", "Scrub_Pants", "Scrub_Shirt"])
 
-        # Add collision mesh generation if enabled
-        if config.get("apply_collision"):
-            cmd.append("--collision")
-
         # Run Blender via run_blender.py, streaming stdout line by line
         process = subprocess.Popen(
             cmd,

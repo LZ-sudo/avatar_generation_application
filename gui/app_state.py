@@ -299,7 +299,6 @@ class OutputSettingsState:
     export_fbx: bool = True
     export_obj: bool = False
     apply_clothing: bool = True
-    apply_collision: bool = True
 
     def is_complete(self) -> bool:
         """Check if output settings are valid."""
