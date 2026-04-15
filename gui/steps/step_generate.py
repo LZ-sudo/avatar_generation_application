@@ -1,5 +1,5 @@
 """
-Step 5: Generate Avatar
+Step 6: Generate Avatar
 
 Handles avatar generation and displays results with preview.
 """

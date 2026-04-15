@@ -62,7 +62,7 @@ class BackendInterface(ABC):
         Args:
             measurements: Dictionary of body measurements
             config: Dictionary of configuration options
-            progress_callback: Optional callback for progress updates (progress, status)
+            log_callback: Optional callback for streaming log output lines
 
         Returns:
             Dictionary containing output paths and preview images
@@ -131,6 +131,14 @@ class RealBackendInterface(BackendInterface):
         mesh_module_path: Path = None,
         blender_path: Path = None,
     ):
+        """
+        Initialize the backend interface with optional module paths.
+
+        Args:
+            measurements_module_path: Override path to the measurements_extraction_module
+            mesh_module_path: Override path to the mesh_generation_module
+            blender_path: Override path to the Blender executable
+        """
         self.measurements_module_path = measurements_module_path
         self.mesh_module_path = mesh_module_path
         self.blender_path = blender_path
