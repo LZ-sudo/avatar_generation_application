@@ -21,6 +21,7 @@ from .features.camera_calibration import CameraCalibrationView
 from .features.aruco_settings import ArucoSettingsView
 from .features.avatar_generation import AvatarGenerationView
 from .features.c3d_converter import C3dConverterView
+from .features.animation_baker import AnimationBakerView
 
 
 class AvatarGeneratorApp(ctk.CTk):
@@ -31,6 +32,7 @@ class AvatarGeneratorApp(ctk.CTk):
     - Camera Calibration
     - ArUco Settings
     - C3D Converter
+    - Animation Baker
     - Avatar Generation
     """
 
@@ -63,6 +65,7 @@ class AvatarGeneratorApp(ctk.CTk):
         self._tabview.add("Camera Calibration")
         self._tabview.add("ArUco Settings")
         self._tabview.add("C3D Converter")
+        self._tabview.add("Animation Baker")
         self._tabview.add("Avatar Generation")
 
         self._tabview.set("Avatar Generation")
@@ -90,6 +93,13 @@ class AvatarGeneratorApp(ctk.CTk):
         )
         self._c3d_converter.pack(expand=True, fill="both")
 
+        animation_baker_tab = self._tabview.tab("Animation Baker")
+        self._animation_baker = AnimationBakerView(
+            animation_baker_tab,
+            set_tabs_locked=self.set_tabs_locked,
+        )
+        self._animation_baker.pack(expand=True, fill="both")
+
         generation_tab = self._tabview.tab("Avatar Generation")
         self._avatar_generation = AvatarGenerationView(
             generation_tab,
@@ -108,6 +118,7 @@ class AvatarGeneratorApp(ctk.CTk):
             self._camera_calibration,
             self._aruco_settings,
             self._c3d_converter,
+            self._animation_baker,
             self._avatar_generation,
         ]:
             pywinstyles.set_opacity(widget, value=1.0)

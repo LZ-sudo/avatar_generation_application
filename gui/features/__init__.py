@@ -8,5 +8,6 @@ Contains the main feature views:
 
 from .camera_calibration import CameraCalibrationView
 from .avatar_generation import AvatarGenerationView
+from .animation_baker import AnimationBakerView
 
-__all__ = ["CameraCalibrationView", "AvatarGenerationView"]
+__all__ = ["CameraCalibrationView", "AvatarGenerationView", "AnimationBakerView"]
