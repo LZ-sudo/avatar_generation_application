@@ -7,7 +7,7 @@ Wraps the existing wizard flow for avatar generation.
 import customtkinter as ctk
 from typing import Callable, Optional
 
-from ..app_state import AppState, WizardStep
+from ..app_state import AppState, WizardStep, ImageInputState, MeasurementsState
 from ..backend_interface import BackendInterface
 from ..components.wizard_nav import WizardNav
 from ..steps.step_image_input import StepImageInput
@@ -64,6 +64,7 @@ class AvatarGenerationView(ctk.CTkFrame):
                 self.app_state,
                 self.backend,
                 on_navigate_next=self._go_next,
+                on_navigate_back=self._retake_image,
                 set_tabs_locked=self._set_tabs_locked,
             ),
             WizardStep.ACCURACY_REVIEW: StepAccuracyReview(
@@ -164,6 +165,14 @@ class AvatarGenerationView(ctk.CTkFrame):
         """Start generation by navigating to GENERATE step."""
         if self.app_state.go_next():
             self._show_step(self.app_state.current_step)
+
+    def _retake_image(self) -> None:
+        """Reset image and measurement state and return to image input step."""
+        self.app_state.image_input = ImageInputState()
+        self.app_state.measurements = MeasurementsState()
+        self.app_state.current_step = WizardStep.IMAGE_INPUT
+        self.app_state.notify_change()
+        self._show_step(WizardStep.IMAGE_INPUT)
 
     def _generate_another(self) -> None:
         """Reset all state and return to image input for a new generation."""

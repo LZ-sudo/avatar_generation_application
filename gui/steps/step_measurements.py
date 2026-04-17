@@ -40,12 +40,14 @@ class StepMeasurements(ctk.CTkFrame):
         app_state: AppState,
         backend: BackendInterface,
         on_navigate_next: Callable[[], None] = None,
+        on_navigate_back: Optional[Callable[[], None]] = None,
         set_tabs_locked: Optional[Callable[[bool], None]] = None,
     ):
         super().__init__(parent, fg_color="transparent")
         self.app_state = app_state
         self.backend = backend
         self.on_navigate_next = on_navigate_next
+        self.on_navigate_back = on_navigate_back
         self._set_tabs_locked = set_tabs_locked
         self._fields: dict[str, LabeledInputField] = {}
         self._computation_complete = False
@@ -108,14 +110,27 @@ class StepMeasurements(ctk.CTkFrame):
         self._status_label = StatusLabel(button_area, text="")
         self._status_label.pack(side="bottom")
 
+        buttons_row = ctk.CTkFrame(button_area, fg_color="transparent")
+        buttons_row.pack(side="bottom", pady=(5, 2))
+
+        self._retake_button = ActionButton(
+            buttons_row,
+            text="Retake Image",
+            width=130,
+            height=40,
+            primary=False,
+            command=self._on_retake_click,
+        )
+        self._retake_button.pack(side="left", padx=(0, 10))
+
         self._configure_button = ActionButton(
-            button_area,
+            buttons_row,
             text="Configure Mesh",
-            width=200,
+            width=155,
             height=40,
             command=self._compute_parameters,
         )
-        self._configure_button.pack(side="bottom", pady=(5, 2))
+        self._configure_button.pack(side="left")
 
         # All measurement fields
         all_measurements = [
@@ -156,6 +171,7 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._navigate_to_accuracy_review,
             )
+            self._retake_button.pack_forget()
             # Show previous result summary if available
             report = self.app_state.measurements.parameters_report
             if report:
@@ -173,6 +189,7 @@ class StepMeasurements(ctk.CTkFrame):
                 state="normal",
                 command=self._compute_parameters,
             )
+            self._retake_button.pack(side="left", padx=(0, 10), before=self._configure_button)
             self._status_label.clear()
 
     def _load_visualization(self) -> None:
@@ -226,8 +243,14 @@ class StepMeasurements(ctk.CTkFrame):
         self.app_state.measurements.is_manually_edited = True
         self.app_state.notify_change()
 
+    def _on_retake_click(self) -> None:
+        """Navigate back to image input to retake the photo."""
+        if self.on_navigate_back:
+            self.on_navigate_back()
+
     def _compute_parameters(self) -> None:
         """Start the mesh parameter computation process."""
+        self._retake_button.pack_forget()
         if self._set_tabs_locked:
             self._set_tabs_locked(True)
         self.app_state.measurements.is_computing_parameters = True
@@ -328,6 +351,7 @@ class StepMeasurements(ctk.CTkFrame):
             field.set_enabled(True)
 
         self._configure_button.stop_processing("Configure Mesh")
+        self._retake_button.pack(side="left", padx=(0, 10), before=self._configure_button)
 
         # Show error message
         error_text = f"Error: {error_message[:80]}..." if len(error_message) > 80 else f"Error: {error_message}"
