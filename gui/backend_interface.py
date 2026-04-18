@@ -5,6 +5,7 @@ This module defines the interface between the GUI and the backend modules.
 """
 
 import os
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable
@@ -14,6 +15,15 @@ import sys
 
 # Suppress console windows for subprocess calls on Windows
 _SUBPROCESS_FLAGS = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+
+_LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+_LOG_DIR.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    filename=str(_LOG_DIR / "avatar_generator.log"),
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+_logger = logging.getLogger(__name__)
 
 
 class BackendInterface(ABC):
@@ -192,9 +202,15 @@ class RealBackendInterface(BackendInterface):
             cmd,
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
             cwd=str(module_path),
             **_SUBPROCESS_FLAGS,
         )
+
+        if result.stdout:
+            _logger.info("measurements stdout:\n%s", result.stdout)
+        if result.stderr:
+            _logger.warning("measurements stderr:\n%s", result.stderr)
 
         if result.returncode != 0:
             error_msg = result.stderr or result.stdout or "Unknown error"
@@ -440,9 +456,15 @@ class RealBackendInterface(BackendInterface):
             cmd,
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
             cwd=str(module_path),
             **_SUBPROCESS_FLAGS,
         )
+
+        if result.stdout:
+            _logger.info("calibration stdout:\n%s", result.stdout)
+        if result.stderr:
+            _logger.warning("calibration stderr:\n%s", result.stderr)
 
         if result.returncode != 0:
             error_msg = result.stderr or result.stdout or "Unknown error"
@@ -517,10 +539,16 @@ class RealBackendInterface(BackendInterface):
             cmd,
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
             cwd=str(module_path),
             timeout=600,  # 10 minute timeout
             **_SUBPROCESS_FLAGS,
         )
+
+        if result.stdout:
+            _logger.info("mesh parameters stdout:\n%s", result.stdout)
+        if result.stderr:
+            _logger.warning("mesh parameters stderr:\n%s", result.stderr)
 
         if result.returncode != 0:
             error_msg = result.stderr or result.stdout or "Unknown error"
