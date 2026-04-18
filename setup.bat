@@ -38,15 +38,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Downloading ViTPose model weights (~370 MB, this may take several minutes)...
-python -c "import sys; sys.path.insert(0, '.'); from vitpose_detection.config_model import get_model_paths; get_model_paths()"
-if errorlevel 1 (
-    echo WARNING: ViTPose model download failed. Models will be downloaded on first use.
-    echo          Check your internet connection if measurement extraction fails.
-) else (
-    echo ViTPose model weights downloaded successfully.
-)
-
 call deactivate
 echo measurements_extraction_module setup complete.
 echo.

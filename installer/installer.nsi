@@ -19,7 +19,7 @@ Name "Avatar Generation Application"
 OutFile "AvatarGeneratorSetup.exe"
 InstallDir "$LOCALAPPDATA\AvatarGenerator"
 InstallDirRegKey HKCU "Software\SUTD_Group_37\AvatarGenerator" "InstallDir"
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 ; ---------------------------------------------------------------------------
 ; Installer pages
@@ -120,5 +120,11 @@ Section "Install"
 
   ; Save install directory to registry
   WriteRegStr HKCU "Software\SUTD_Group_37\AvatarGenerator" "InstallDir" "$INSTDIR"
+
+  ; Enable Windows long path support (required for PyTorch DLL loading when
+  ; the install path is deep). Requires Windows 10 1607+ and Python 3.6+.
+  ; This is a system-wide setting under HKLM -- request elevation only for
+  ; this single write so the rest of the installer stays user-level.
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
 
 SectionEnd
